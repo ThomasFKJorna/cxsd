@@ -1,4 +1,6 @@
-# xsd-to-xast-types
+# xsd-to-xast
+
+[![npm version badge](https://img.shields.io/npm/v/@thomasfkjorna/mdh?color=%23cb0000&logo=npm)](https://npmjs.com/package/xsd-to-xast)
 
 This is a fork of `cxsd` which tries to turn the output from `cxsd` into something for use with `xast`.
 
@@ -112,6 +114,13 @@ yarn build
 ```
 
 The code is a bit of a mess, very hard to understand the structure of this project.
+
+## Sponsors
+
+Love these legends
+
+<!-- sponsors -->
+<!-- sponsors -->
 
 # OLD README
 
