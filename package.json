@@ -1,6 +1,6 @@
 {
   "name": "xsd-to-xast",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Streaming XSD parser and XML parser generator with TypeScript output",
   "bin": {
     "xsd-to-xast": "cxsd-cli.js"
