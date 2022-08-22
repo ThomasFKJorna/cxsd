@@ -18,6 +18,7 @@ export class ComplexType extends types.TypeBase {
     types.Choice,
     types.AttributeGroup,
     types.Group,
+    types.All,
   ]
 }
 
