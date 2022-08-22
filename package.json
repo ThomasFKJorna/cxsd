@@ -1,6 +1,6 @@
 {
   "name": "xsd-to-xast",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Generate xast TypeScript types from an XSD schema",
   "bin": {
     "xsd-to-xast": "cxsd-cli.js"
