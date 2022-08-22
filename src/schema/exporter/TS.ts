@@ -186,10 +186,14 @@ export class TS extends Exporter {
         .map((attribute) => {
           var outAttribute = this.writeMember(attribute, false, true)
           if (outAttribute) {
-            return outAttribute
-              .replace(/(\w|_)Type/g, '$1')
-              .replace(/_(\w)/g, (_, c) => c.toUpperCase())
-              .replace(/^(\w)/, (_, c) => c.toUpperCase())
+            return (
+              outAttribute
+                .replace(/(\w|_)Type/g, '$1')
+                .replace(/_(\w)/g, (_, c) => c.toUpperCase())
+                .replace(/^(\w)/, (_, c) => c.toUpperCase())
+                // No booleans or numbers in attributes
+                .replace(/: (boolean|number)/, (_, c) => `: \`\$\{${c}\}\``)
+            )
           }
         })
         .filter(Boolean)
@@ -221,7 +225,7 @@ export class TS extends Exporter {
 
       const out = `{
 	type: 'element',
-	name: '${name.replace(/(\w)/, (c) => c.toLowerCase())}',${
+	name: '${/[A-Z]+/.test(name) ? name : name.replace(/(\w)/, (c) => c.toLowerCase())}',${
         outAttrList.length
           ? `
   attributes: {
