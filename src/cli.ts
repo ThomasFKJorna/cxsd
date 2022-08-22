@@ -15,6 +15,7 @@ import * as schema from './schema'
 import { AddImports } from './schema/transform/AddImports'
 import { Sanitize } from './schema/transform/Sanitize'
 import { promisify } from 'util'
+import { dirname, join } from 'path'
 
 const exec = promisify(rawExec)
 type _ICommand = typeof cmd
@@ -33,12 +34,13 @@ interface ICommand extends _ICommand {
   // .option('-c, --cache-xsd <path>', 'Cache downloaded XSD filed under <path>')
   .option('-t, --out-ts <path>', 'Output TypeScript definitions under <path>')
   .option('-j, --out-js <path>', 'Output JavaScript modules under <path>')
+  .option('--no-serve', "Don't try to resolve a local path by serving the files locally")
   .action(handleConvert)
   .parse(process.argv)
 
 if (process.argv.length < 3) cmd.help()
 
-function handleConvert(urlRemote: string, opts: { [key: string]: any }) {
+async function handleConvert(urlRemote: string, opts: { [key: string]: any }) {
   var schemaContext = new schema.Context()
   var xsdContext = new Context(schemaContext)
 
@@ -50,8 +52,14 @@ function handleConvert(urlRemote: string, opts: { [key: string]: any }) {
 
     Cache.patchRequest()
   }
+  if (!urlRemote.startsWith('http')) {
+    console.log(
+      'Looks like you supplied a path rather than a URL. Ill set up a local server to serve the files from.',
+    )
+    exec(`npx serve ${dirname(urlRemote)}`)
+    await new Promise((r) => setTimeout(r, 5000))
+  }
 
-  var jsCache = new Cache(opts['outJs'] || 'xmlns', '_index.js')
   var tsCache = new Cache(opts['outTs'] || 'xmlns', '_index.d.ts')
 
   var loader = new Loader(xsdContext, fetchOptions)
@@ -81,7 +89,7 @@ function handleConvert(urlRemote: string, opts: { [key: string]: any }) {
         .then(() => new schema.exporter.TS(spec, tsCache).exec())
         .then((res) => {
           console.log(res)
-          return exec('yarn run prettier -w .')
+          return exec(`yarn run prettier -w ${opts['outTs'] || 'xmlns'}`)
         })
       // .then((res) => console.log(res))
     } catch (err) {
