@@ -12,7 +12,11 @@ jobs:
         with:
           node-version: 16
       - run: yarn install
-      - run: yarn build
+        continue-on-error: true
+
+      - name: Build
+        run: yarn build
+        continue-on-error: true
       - uses: JS-DevTools/npm-publish@v1
         with:
           access: 'public'
