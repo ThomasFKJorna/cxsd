@@ -2,7 +2,7 @@
 
 [![npm version badge](https://img.shields.io/npm/v/xsd-to-xast?color=%23cb0000&logo=npm)](https://npmjs.com/package/xsd-to-xast)
 
-This is a fork of `cxsd` which tries to turn the output from `cxsd` into something for use with `xast`.
+This is a fork of `cxsd` which tries to turn the output from `cxsd` into something for use with `[xast](https://github.com/syntax-tree/xast)`.
 
 It will output types that look like
 
