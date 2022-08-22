@@ -48,8 +48,6 @@ export class Choice extends GenericChildList {
   static mayContain: () => types.BaseClass[] = () => [types.Element, types.Any, types.Annotation]
 
   resolve(state: State) {
-    console.log(this.name)
-
     this.scope.addAllToParent('element', this.min, this.max)
   }
 }

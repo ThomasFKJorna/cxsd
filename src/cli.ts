@@ -88,7 +88,6 @@ async function handleConvert(urlRemote: string, opts: { [key: string]: any }) {
         // .then(() => new schema.exporter.JS(spec, jsCache).exec())
         .then(() => new schema.exporter.TS(spec, tsCache).exec())
         .then((res) => {
-          console.log(res)
           return exec(`npx prettier -w ${opts['outTs'] || 'xmlns'}`)
         })
       // .then((res) => console.log(res))

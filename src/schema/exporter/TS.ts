@@ -111,8 +111,12 @@ export class TS extends Exporter {
     var outTypeList = typeList.map((type: Type) => {
       if (type.isPlainPrimitive && (!type.literalList || !type.literalList.length)) {
         const primitiveName = type.primitiveType.name
+
         return !isAttribute && ['string', 'number', 'boolean'].includes(primitiveName)
-          ? 'Text'
+          ? (ref.safeName || ref.member.safeName)
+              .replace(/(\w)Type$/, '$1')
+              .replace(/_(\w)/g, (_, c) => c.toUpperCase())
+              .replace(/^(\w)/, (_, c) => c.toUpperCase())
           : primitiveName
       } else return this.writeTypeRef(type, '')
     })
@@ -185,6 +189,7 @@ export class TS extends Exporter {
             return outAttribute
               .replace(/(\w|_)Type/g, '$1')
               .replace(/_(\w)/g, (_, c) => c.toUpperCase())
+              .replace(/^(\w)/, (_, c) => c.toUpperCase())
           }
         })
         .filter(Boolean)
@@ -194,7 +199,16 @@ export class TS extends Exporter {
           var outChild = this.writeMember(child, false)
           if (!outChild) return
 
-          const outChildButText = outChild.replace(/\b(string|number)\b/, 'Text')
+          if (!/\b(string|number)\b/.test(outChild)) return outChild
+          const outChildButText = outChild.replace(
+            /((\w+)\??): \b(string|number)\b/,
+            (_, name, val) =>
+              `${val}: ${child.safeName
+                .replace(/(\w)Type/g, '$1')
+                .replace(/(\w)Type$/, '$1')
+                .replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase())
+                .replace(/^(\w)/, (_, c) => c.toUpperCase())}`,
+          )
           return outChildButText
         })
         .filter(Boolean)
@@ -298,7 +312,19 @@ ${
     } else if (type.isPlainPrimitive) {
       parentDef = this.writeTypeRef(type.parent, '_')
 
-      output.push(exportPrefix + 'type ' + name + ' = ' + content + ';' + '\n')
+      if (!['string', 'number'].includes(content)) {
+        output.push(exportPrefix + 'type ' + name + ' = ' + content + ';' + '\n')
+      } else {
+        const outName =
+          (type.containingRef && type.containingRef.member && type.containingRef.member.name) ||
+          type.parent.name ||
+          (type.parent.containingRef && type.parent.containingRef.member.name) ||
+          type.safeName
+        output.push(
+          `export type ${name} = TextNode${outName === 'string' ? '' : `<"${outName}">`};\n`,
+        )
+      }
+
       if (type.literalList && type.literalList.length) {
         output.push(
           'interface _' +
@@ -393,7 +419,13 @@ ${
     // output.push('\t_namespace: string;');
     // output.push('}');
 
-    output.push(`import {Element, Text} from 'xast'`)
+    output.push(`import {Element, Text} from 'xast'
+
+export interface TextNode<T extends string = string> extends Element {
+  name: T
+  attributes: {}
+  children: [Text]
+}    `)
     output.push(`export type ValuesType<T extends ReadonlyArray<any> | ArrayLike<any> | Record<any, any>> = T extends ReadonlyArray<any> ? T[number] : T extends ArrayLike<any> ? T[number] : T extends object ? T[keyof T] : never;
 export type NoUndefined<T> = Exclude<T, undefined>
 export type ArrayValueMaybe<T> = T extends any[]

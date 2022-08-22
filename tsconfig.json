@@ -4,9 +4,12 @@
     "experimentalDecorators": true,
     "module": "commonjs",
     "moduleResolution": "node",
+    // "strict":true,
+
     "noImplicitAny": true,
     "outDir": "dist",
     "target": "es5"
   },
-  "files": ["typings/index.d.ts", "typings-custom/node-expat.d.ts", "src/cli.ts"]
+  "files": ["typings/index.d.ts", "typings-custom/node-expat.d.ts", "src/cli.ts"],
+  "include": ["src/**/*.ts"]
 }
