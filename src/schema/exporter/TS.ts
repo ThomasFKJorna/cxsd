@@ -225,7 +225,7 @@ export class TS extends Exporter {
   attributes: {
 	${outAttrList.join('\n\t')}
 	}
-	${outChildList.length ? `children: RequiredMap<${safeName}Children>` : ''}
+	${outChildList.length ? `children: RequiredMap<${safeName}Children>[]` : ''}
 }
 
 ${
