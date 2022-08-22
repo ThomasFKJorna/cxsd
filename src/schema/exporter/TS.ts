@@ -221,11 +221,15 @@ export class TS extends Exporter {
 
       const out = `{
 	type: 'element',
-	name: '${name.replace(/(\w)/, (c) => c.toLowerCase())}',
+	name: '${name.replace(/(\w)/, (c) => c.toLowerCase())}',${
+        outAttrList.length
+          ? `
   attributes: {
 	${outAttrList.join('\n\t')}
 	}
-	${outChildList.length ? `children: RequiredMap<${safeName}Children>[]` : ''}
+`
+          : ''
+      }${outChildList.length ? `children: RequiredMap<${safeName}Children>[]` : ''}
 }
 
 ${
@@ -422,8 +426,8 @@ ${
     output.push(`import {Element, Text} from 'xast'
 
 export interface TextNode<T extends string = string> extends Element {
+  type: "element"
   name: T
-  attributes: {}
   children: [Text]
 }    `)
     output.push(`export type ValuesType<T extends ReadonlyArray<any> | ArrayLike<any> | Record<any, any>> = T extends ReadonlyArray<any> ? T[number] : T extends ArrayLike<any> ? T[number] : T extends object ? T[keyof T] : never;
