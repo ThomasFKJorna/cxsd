@@ -89,7 +89,7 @@ async function handleConvert(urlRemote: string, opts: { [key: string]: any }) {
         .then(() => new schema.exporter.TS(spec, tsCache).exec())
         .then((res) => {
           console.log(res)
-          return exec(`yarn run prettier -w ${opts['outTs'] || 'xmlns'}`)
+          return exec(`npx prettier -w ${opts['outTs'] || 'xmlns'}`)
         })
       // .then((res) => console.log(res))
     } catch (err) {
