@@ -1,7 +1,7 @@
 {
   "name": "xsd-to-xast",
   "version": "0.3.5",
-  "description": "Streaming XSD parser and XML parser generator with TypeScript output",
+  "description": "Generate xast TypeScript types from an XSD schema",
   "bin": {
     "xsd-to-xast": "cxsd-cli.js"
   },
@@ -17,12 +17,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/charto/cxsd.git"
+    "url": "git+https://github.com/tefkah/xsd-to-xast.git"
   },
   "bugs": {
-    "url": "https://github.com/charto/cxsd/issues"
+    "url": "https://github.com/tefkah/xsd-to-xast/issues"
   },
-  "homepage": "https://github.com/charto/cxsd#readme",
+  "homepage": "https://github.com/tefkah/xsd-to-xast#readme",
   "keywords": [
     "xsd",
     "xast",
