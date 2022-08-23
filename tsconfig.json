@@ -5,11 +5,12 @@
     "module": "commonjs",
     "moduleResolution": "node",
     // "strict":true,
-
+    "lib": ["ES2022", "DOM"],
     "noImplicitAny": true,
     "outDir": "dist",
     "target": "es5"
   },
-  "files": ["typings/index.d.ts", "typings-custom/node-expat.d.ts", "src/cli.ts"],
-  "include": ["src/**/*.ts"]
+  "files": ["src/cli.ts"],
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "typingz/*"]
 }

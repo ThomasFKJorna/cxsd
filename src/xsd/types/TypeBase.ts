@@ -49,11 +49,13 @@ export class TypeBase extends Base {
       if (!(type instanceof TypeBase)) break
       else if (type instanceof base) return type
       else if (
-        breakAtContent &&
-        type.scope &&
-        (type.scope.dumpTypes('attribute') || type.scope.dumpTypes('attributeGroup'))
+        breakAtContent
+        // &&
+        // type.scope &&
+        // (type.scope.dumpTypes('attribute') || type.scope.dumpTypes('attributeGroup'))
       )
         break
+      // @ts-expect-error idk
       else next = type.parent
     }
 

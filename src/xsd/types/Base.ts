@@ -69,6 +69,6 @@ export class Base {
   bytePos: number
   name: string
 
-  static name: string
+  // static name: string
   static rule: Rule
 }

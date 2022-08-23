@@ -1,7 +1,7 @@
 // This file is part of cxsd, copyright (c) 2015-2016 BusFaster Ltd.
 // Released under the MIT license, see LICENSE.
 
-import * as cmd from 'commander'
+import { program } from 'commander'
 import { exec as rawExec } from 'child_process'
 
 import { Cache, FetchOptions } from 'cget'
@@ -18,12 +18,13 @@ import { promisify } from 'util'
 import { dirname, join } from 'path'
 
 const exec = promisify(rawExec)
-type _ICommand = typeof cmd
-interface ICommand extends _ICommand {
-  arguments(spec: string): ICommand
-}
+// type _ICommand = typeof cmd
+// interface ICommand extends _ICommand {
+//   arguments(spec: string): ICommand
+// }
 
-;(cmd.version(require('../package.json').version) as ICommand)
+program
+  .version(require('../package.json').version)
   .arguments('<url>')
   .description('XSD download and conversion tool')
   .option(
@@ -38,7 +39,7 @@ interface ICommand extends _ICommand {
   .action(handleConvert)
   .parse(process.argv)
 
-if (process.argv.length < 3) cmd.help()
+if (process.argv.length < 3) program.help()
 
 async function handleConvert(urlRemote: string, opts: { [key: string]: any }) {
   var schemaContext = new schema.Context()
