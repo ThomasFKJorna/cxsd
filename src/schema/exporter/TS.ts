@@ -7,12 +7,23 @@ import { Namespace } from '../Namespace'
 import { Member } from '../Member'
 import { MemberRef } from '../MemberRef'
 import { Type } from '../Type'
+import { text } from 'stream/consumers'
 
 var docName = 'document'
 var baseName = 'Element'
 
 /** Export parsed schema to a TypeScript d.ts definition file. */
 
+const makeNameBetter = (name: string) =>
+  name
+    // replace SomethingType with Something
+    // and SomethingTypeNameType with SomethingName
+    // but don't replace SomethingTypeType with Something
+    .replace(/(\w|_)(?<!Type)Type/g, '$1')
+    // replace Hey_nerd with Hey_Nerd
+    .replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+    // capitalize first letter
+    .replace(/^([a-z])/, (_, c) => c.toUpperCase())
 export class TS extends Exporter {
   /** Format an XSD annotation as JSDoc. */
 
@@ -68,9 +79,7 @@ export class TS extends Exporter {
     var output: string[] = []
 
     var namespace = type.namespace
-    var name =
-      namePrefix +
-      type.safeName.replace(/(\w|_)Type/g, '$1').replace(/_(\w)/g, (_, c) => c.toUpperCase())
+    var name = namePrefix + makeNameBetter(type.safeName)
     if (!namespace || namespace == this.namespace) {
       output.push(name)
     } else {
@@ -113,10 +122,7 @@ export class TS extends Exporter {
         const primitiveName = type.primitiveType.name
 
         return !isAttribute && ['string', 'number', 'boolean'].includes(primitiveName)
-          ? (ref.safeName || ref.member.safeName)
-              .replace(/(\w)Type$/, '$1')
-              .replace(/_(\w)/g, (_, c) => c.toUpperCase())
-              .replace(/^(\w)/, (_, c) => c.toUpperCase())
+          ? makeNameBetter(ref.safeName || ref.member.safeName)
           : primitiveName
       } else return this.writeTypeRef(type, '')
     })
@@ -146,10 +152,7 @@ export class TS extends Exporter {
       output.push('\n')
     }
 
-    output.push(
-      indent +
-        ref.safeName.replace(/(\w|_)Type/g, '$1').replace(/_(\w)/g, (_, c) => c.toUpperCase()),
-    )
+    output.push(indent + ref.safeName)
     if (ref.min == 0) output.push('?')
     output.push(': ')
 
@@ -180,19 +183,15 @@ export class TS extends Exporter {
 
       var output: string[] = []
       var parentType = type.parent
-      const safeName = type.safeName.replace(/Type/g, '')
+      const safeName = type.safeName
 
       const outAttrList = type.attributeList
         .map((attribute) => {
           var outAttribute = this.writeMember(attribute, false, true)
           if (outAttribute) {
-            return (
-              outAttribute
-                .replace(/(\w|_)Type/g, '$1')
-                .replace(/_(\w)/g, (_, c) => c.toUpperCase())
-                .replace(/^(\w)/, (_, c) => c.toUpperCase())
-                // No booleans or numbers in attributes
-                .replace(/: (boolean|number)/, (_, c) => `: \`\$\{${c}\}\``)
+            return makeNameBetter(outAttribute).replace(
+              /: (boolean|number)/,
+              (_, c) => `: \`\$\{${c}\}\``,
             )
           }
         })
@@ -203,25 +202,33 @@ export class TS extends Exporter {
           var outChild = this.writeMember(child, false)
           if (!outChild) return
 
+          /**
+           * We want to replace 'child: string' with 'child: Child'
+           * because cxsd assumes `type: string` to mean literally a string
+           * but we want `{type: "text", value: string}` to be the lowest denominator.
+           *
+           * Later we will create the extra
+           * `{
+           *    type: "element",
+           *    name: "child",
+           *    children: [{type: "text", value: string}]
+           * }`
+           * elements that are missing
+           */
           if (!/\b(string|number)\b/.test(outChild)) return outChild
+
           const outChildButText = outChild.replace(
             /((\w+)\??): \b(string|number)\b/,
-            (_, name, val) =>
-              `${val}: ${child.safeName
-                .replace(/(\w)Type/g, '$1')
-                .replace(/(\w)Type$/, '$1')
-                .replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase())
-                .replace(/^(\w)/, (_, c) => c.toUpperCase())}`,
+            (_, name, val) => `${val}: ${makeNameBetter(child.safeName)}`,
           )
           return outChildButText
         })
         .filter(Boolean)
 
-      const name = (
+      const name =
         type.name ||
         (type.containingRef && type.containingRef.member && type.containingRef.member.name) ||
         type.safeName
-      ).replace(/(\w|_)Type/g, '$1')
 
       const out = `{
 	type: 'element',
@@ -269,34 +276,20 @@ ${
       (type.containingRef && type.containingRef.member && type.containingRef.member.comment) ||
       ''
 
-    if (type.safeName)
-      type.safeName = type.safeName
-        .replace(/(\w|_)Type/g, '$1')
-        .replace(/_(\w)/g, (_, c) => c.toUpperCase())
+    type.safeName &&= makeNameBetter(type?.safeName)
 
-    if (type.containingRef) {
-      type.containingRef.safeName = type.containingRef.safeName
-        .replace(/Type/g, '')
-        .replace(/_(\w)/g, (_, c) => c.toUpperCase())
+    if (type.containingRef)
+      type.containingRef.safeName &&= makeNameBetter(type?.containingRef?.safeName)
 
-      if (type.containingRef.member && type.containingRef.member.safeName) {
-        type.containingRef.member.safeName = type.containingRef.member.safeName
-          .replace(/(\w|_)Type/g, '$1')
-          .replace(/_(\w)/g, (_, c) => c.toUpperCase())
-      }
-    }
-    if (type.parent && type.parent.safeName) {
-      type.parent.safeName = type.parent.safeName
-        ?.replace(/(\w|_)Type/g, '$1')
-        ?.replace(/_(\w)/g, (_, c) => c.toUpperCase())
-    }
+    if (type.containingRef)
+      type.containingRef.member.safeName &&= makeNameBetter(type?.containingRef?.member?.safeName)
+
+    if (type.parent) type.parent.safeName &&= makeNameBetter(type?.parent?.safeName)
 
     var parentDef: string
     var exportPrefix = type.isExported ? 'export ' : ''
 
-    const name = type.safeName
-      .replace(/(\w|_)Type/g, '$1')
-      .replace(/_(\w)/g, (_, c) => c.toUpperCase())
+    const name = type.safeName //type.safeName ? makeNameBetter(type?.safeName) : type?.safeName
 
     if (comment) {
       output.push(TS.formatComment('', comment))
@@ -322,6 +315,12 @@ ${
       return output.join('')
     }
 
+    if (/5.3.1/.test(namespace.name)) {
+      ;/date_?t/i?.test(type.name ?? type.safeName) &&
+        console.log(name, type, type.isPlainPrimitive)
+      ;/day/i?.test(type.name ?? type.safeName) && console.log(type, type.isPlainPrimitive)
+    }
+
     if (type.isList) {
       output.push(exportPrefix + 'type ' + name + ' = ' + content + ';' + '\n')
       return output.join('')
@@ -335,12 +334,18 @@ ${
         output.push(exportPrefix + 'type ' + name + ' = ' + content + ';' + '\n')
       } else {
         const outName =
-          (type.containingRef && type.containingRef.member && type.containingRef.member.name) ||
+          type?.containingRef?.member?.name ||
           type.parent.name ||
-          (type.parent.containingRef && type.parent.containingRef.member.name) ||
+          type?.parent?.containingRef?.member?.name ||
           type.safeName
-        if (type.attributeList.length === 0 && type.childList.length === 0) {
-          output.push(`export type ${name} = TextNode;\n`)
+
+        if (type.attributeList?.length === 0 && type.childList?.length === 0) {
+          // type.name
+          // ? output.push(`export type ${name} =  ${outName}\n`)
+          //   :
+          output.push(
+            `export type ${name} = TextNode${outName === 'string' ? '' : `<"${outName}">`};\n`,
+          )
         } else {
           output.push(
             `export type ${name} = TextNode${outName === 'string' ? '' : `<"${outName}">`};\n`,
@@ -459,7 +464,20 @@ export type AllTypes<T> = ArrayValueMaybe<ValuesType<T>>
     
 export type RequiredMap<T> = AllTypes<T>`)
 
-    for (var type of namespace.typeList
+    const prettierTypes = namespace.typeList
+      .map((type) => {
+        if (!type) return
+        type.safeName = makeNameBetter(type.safeName)
+        return type
+      })
+      .filter(Boolean)
+
+    namespace.memberList.forEach((member) => {
+      if (!member) return
+      member.safeName = makeNameBetter(member.safeName)
+    })
+
+    for (var type of prettierTypes
       .slice(0)
       .sort((a: Type, b: Type) => a.safeName.localeCompare(b.safeName))) {
       if (!type) continue
@@ -480,12 +498,23 @@ export type RequiredMap<T> = AllTypes<T>`)
       )
         return
 
+      if (/publishername/i.test(member.safeName)) {
+        const type = namespace.typeList.find((type) => /publishername/i.test(type?.safeName))
+
+        console.log('HERE')
+        console.log(member, type)
+      }
       if (
-        namespace.typeList.findIndex(
-          (type) => type && (type.name || type.safeName || '') === member.safeName,
-        ) !== -1
-      )
+        namespace.typeList.find(
+          (type) =>
+            // new RegExp(member.safeName, 'i').test(type?.safeName ?? type?.name ?? ''),
+            member?.safeName?.toLowerCase() === type?.safeName?.toLowerCase(),
+        )
+      ) {
+        console.log(`${member.safeName} is already defined`)
         return
+      }
+
       if (!member.safeName || !member.name) {
         console.log('Member without name: ', member.name)
         return
@@ -506,17 +535,6 @@ export type RequiredMap<T> = AllTypes<T>`)
       }export type ${goodName} = TextNode<"${member.name}">;\n`
 
       output.push(out)
-    })
-
-    namespace.typeList.forEach((type) => {
-      if (!/\b(cyear|author|day|month)\b/i.test(type.safeName)) return
-
-      console.dir(type, { depth: 2 })
-    })
-    namespace.memberList.forEach((member) => {
-      if (!/\b(cyear|author|component_?number|day|month)\b/i.test(member.name)) return
-
-      console.dir(member, { depth: 2 })
     })
 
     output.push('export interface ' + docName + ' extends ' + baseName + ' {')
