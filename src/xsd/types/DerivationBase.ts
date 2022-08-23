@@ -21,15 +21,20 @@ export class DerivationBase extends types.Base {
 
   resolve(state: State) {
     var base = new QName(this.base, state.source)
-    // if (!base.name) return;
-    // !base.name && console.log(base);
-    ;(state.parent.xsdElement as ContentBase | types.SimpleType).parent =
-      (this.scope.lookup(base, 'type') as types.TypeBase) || base
 
-    this.scope.addAllToParent('element')
-    this.scope.addAllToParent('attribute')
-    this.scope.addAllToParent('group')
-    this.scope.addAllToParent('attributeGroup')
+    try {
+      ;(state.parent.xsdElement as ContentBase | types.SimpleType).parent =
+        (this.scope.lookup(base, 'type') as types.TypeBase) || base
+      // if (!base.name) return;
+      // !base.name && console.log(base);
+
+      this.scope.addAllToParent('element')
+      this.scope.addAllToParent('attribute')
+      this.scope.addAllToParent('group')
+      this.scope.addAllToParent('attributeGroup')
+    } catch (e) {
+      console.log(base)
+    }
   }
 
   id: string = null

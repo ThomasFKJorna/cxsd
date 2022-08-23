@@ -17,18 +17,16 @@ export class Restriction extends DerivationBase {
     this.parent = state.parent
   }
 
-  /*
-	TODO: uncomment this when resolve function dependencies are handled.
-	resolve(state: State) {
-		var parent = state.parent.xsdElement;
+  //	TODO: uncomment this when resolve function dependencies are handled.
+  resolve(state: State) {
+    var parent = state.parent.xsdElement
 
-		if(parent instanceof types.SimpleType) {
-			parent.setEnumerationList(this.enumerationList);
-		}
+    if (parent instanceof types.SimpleType) {
+      parent.setEnumerationList(this.enumerationList)
+    }
 
-//		super.resolve(state);
-	}
-*/
+    super.resolve(state)
+  }
 
   addEnumeration(content: string) {
     if (!this.enumerationList) {

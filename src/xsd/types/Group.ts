@@ -29,6 +29,7 @@ export class GenericChildList extends GroupBase {
     Group,
     Sequence,
     Choice,
+    All,
     types.Any,
   ]
 
@@ -59,7 +60,7 @@ export class All extends GenericChildList {}
 // <xsd:group>
 
 export class Group extends GroupBase {
-  static mayContain: () => types.BaseClass[] = () => [types.Annotation, Sequence, Choice]
+  static mayContain: () => types.BaseClass[] = () => [types.Annotation, Sequence, Choice, All]
 
   init(state: State) {
     super.init(state)

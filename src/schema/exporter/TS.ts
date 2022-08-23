@@ -258,6 +258,9 @@ ${
   }
 
   writeType(type: Type, member?: MemberRef) {
+    if (type.parent) {
+      console.dir(type.safeName, { depth: 4 })
+    }
     var namespace = this.namespace
     var output: string[] = []
     var comment =
@@ -328,9 +331,16 @@ ${
           type.parent.name ||
           (type.parent.containingRef && type.parent.containingRef.member.name) ||
           type.safeName
-        output.push(
-          `export type ${name} = TextNode${outName === 'string' ? '' : `<"${outName}">`};\n`,
-        )
+        if (type.attributeList.length === 0 && type.childList.length === 0) {
+          // console.log('piemel')
+
+          output.push(`export type ${name} = TextNode;\n`)
+        } else {
+          // console.dir(type, { depth: 3 })
+          output.push(
+            `export type ${name} = TextNode${outName === 'string' ? '' : `<"${outName}">`};\n`,
+          )
+        }
       }
 
       if (type.literalList && type.literalList.length) {
@@ -450,6 +460,59 @@ export type RequiredMap<T> = AllTypes<T>`)
 
       output.push(this.writeType(type))
     }
+
+    const alreadyVisitedMembers: string[] = []
+    // The typelist does not include all types,
+    // as it treats all the Members which have a type of string as the same
+    // but, we don't treat them as the same.
+    // So, we need to add the missing types.
+    namespace.memberList.forEach((member) => {
+      if (
+        member.typeList &&
+        member.typeList[0] &&
+        (member.typeList[0].childList.length > 0 || member.typeList[0].attributeList.length > 0)
+      )
+        return
+
+      if (
+        namespace.typeList.findIndex(
+          (type) => type && (type.name || type.safeName || '') === member.safeName,
+        ) !== -1
+      )
+        return
+      if (!member.safeName || !member.name) {
+        console.log('Member without name: ', member)
+        return
+      }
+
+      if (alreadyVisitedMembers.includes(member.safeName)) {
+        console.log('Member already visited: ', member)
+        return
+      }
+
+      alreadyVisitedMembers.push(member.safeName)
+      const goodName = member.safeName
+        .replace(/_(\w)/g, (_, c) => c.toUpperCase())
+        .replace(/^(\w)/, (_, c) => c.toUpperCase())
+
+      const out = `${
+        member.comment ? `${TS.formatComment('', member.comment)}\n` : ''
+      }export type ${goodName} = TextNode<"${member.name}">;\n`
+      console.log(out)
+
+      output.push(out)
+    })
+
+    namespace.typeList.forEach((type) => {
+      if (!/\b(cyear|author|day|month)\b/i.test(type.safeName)) return
+
+      console.dir(type, { depth: 2 })
+    })
+    namespace.memberList.forEach((member) => {
+      if (!/\b(cyear|author|component_?number|day|month)\b/i.test(member.name)) return
+
+      console.dir(member, { depth: 2 })
+    })
 
     output.push('export interface ' + docName + ' extends ' + baseName + ' {')
 

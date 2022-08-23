@@ -122,7 +122,7 @@ export class Scope {
       scope = name.namespace.getScope()
     }
 
-    var iter = 100
+    var iter = 200
 
     while (scope && --iter) {
       if (scope.visible[kind]) {
