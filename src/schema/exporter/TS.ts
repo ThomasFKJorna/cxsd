@@ -287,8 +287,8 @@ ${
     }
     if (type.parent && type.parent.safeName) {
       type.parent.safeName = type.parent.safeName
-        .replace(/(\w|_)Type/g, '$1')
-        .replace(/_(\w)/g, (_, c) => c.toUpperCase())
+        ?.replace(/(\w|_)Type/g, '$1')
+        ?.replace(/_(\w)/g, (_, c) => c.toUpperCase())
     }
 
     var parentDef: string
@@ -318,12 +318,20 @@ ${
           '; }' +
           '\n',
       )
-    } else if (type.isList) {
+
+      return output.join('')
+    }
+
+    if (type.isList) {
       output.push(exportPrefix + 'type ' + name + ' = ' + content + ';' + '\n')
-    } else if (type.isPlainPrimitive) {
+      return output.join('')
+    }
+
+    if (type.isPlainPrimitive) {
       parentDef = this.writeTypeRef(type.parent, '_')
 
       if (!['string', 'number'].includes(content)) {
+        console.log(content)
         output.push(exportPrefix + 'type ' + name + ' = ' + content + ';' + '\n')
       } else {
         const outName =
@@ -332,11 +340,8 @@ ${
           (type.parent.containingRef && type.parent.containingRef.member.name) ||
           type.safeName
         if (type.attributeList.length === 0 && type.childList.length === 0) {
-          // console.log('piemel')
-
           output.push(`export type ${name} = TextNode;\n`)
         } else {
-          // console.dir(type, { depth: 3 })
           output.push(
             `export type ${name} = TextNode${outName === 'string' ? '' : `<"${outName}">`};\n`,
           )
@@ -355,24 +360,25 @@ ${
             '; }' +
             '\n',
         )
-      } else {
-        // NOTE: Substitution groups are ignored here!
-        output.push('type _' + name + ' = ' + parentDef + ';' + '\n')
+        return output.join('')
       }
-    } else {
-      if (type.parent) parentDef = this.writeTypeRef(type.parent, '_')
-
-      output.push(
-        'export interface ' +
-          name +
-          this.writeParents(parentDef, type.mixinList) +
-          ' ' +
-          content +
-          '\n',
-      )
-      //output.push(exportPrefix + 'interface ' + name + ' extends _' + name + ' { constructor: { new(): ' + name + ' }; }' + '\n');
-      //if(type.isExported) output.push(exportPrefix + 'var ' + name + ': { new(): ' + name + ' };' + '\n');
+      // NOTE: Substitution groups are ignored here!
+      output.push('type _' + name + ' = ' + parentDef + ';' + '\n')
+      return output.join('')
     }
+
+    if (type.parent) parentDef = this.writeTypeRef(type.parent, '_')
+
+    output.push(
+      'export interface ' +
+        name +
+        this.writeParents(parentDef, type.mixinList) +
+        ' ' +
+        content +
+        '\n',
+    )
+    //output.push(exportPrefix + 'interface ' + name + ' extends _' + name + ' { constructor: { new(): ' + name + ' }; }' + '\n');
+    //if(type.isExported) output.push(exportPrefix + 'var ' + name + ': { new(): ' + name + ' };' + '\n');
 
     return output.join('')
   }
@@ -481,12 +487,12 @@ export type RequiredMap<T> = AllTypes<T>`)
       )
         return
       if (!member.safeName || !member.name) {
-        console.log('Member without name: ', member)
+        console.log('Member without name: ', member.name)
         return
       }
 
       if (alreadyVisitedMembers.includes(member.safeName)) {
-        console.log('Member already visited: ', member)
+        console.log('Member already visited: ', member.name)
         return
       }
 
@@ -498,7 +504,6 @@ export type RequiredMap<T> = AllTypes<T>`)
       const out = `${
         member.comment ? `${TS.formatComment('', member.comment)}\n` : ''
       }export type ${goodName} = TextNode<"${member.name}">;\n`
-      console.log(out)
 
       output.push(out)
     })
