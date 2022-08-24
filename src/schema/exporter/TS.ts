@@ -695,28 +695,29 @@ export type RequiredMap<T> = AllTypes<T>`)
 
     // output.push('export interface ' + docName + ' extends ' + baseName + ' {')
 
-    const documentChildren = doc.childList.reduce((acc, child) => {
-      if (!child) return acc
-      const out = this.writeMember(child, true)
-      if (!out) return acc
-      return `${acc}\n${out}`
-    }, '')
-    // for (var child of doc.childList) {
-    //   var outElement = this.writeMember(child, true)
-    //   if (outElement) {
-    //     output.push(outElement)
-    //   }
+    //     const documentChildren = doc.childList.reduce((acc, child) => {
+    //       if (!child) return acc
+
+    //       const out = this.writeMember(child, true)
+    //       if (!out) return acc
+    //       return `${acc}\n${out}`
+    //     }, '')
+    //     // for (var child of doc.childList) {
+    //     //   var outElement = this.writeMember(child, true)
+    //     //   if (outElement) {
+    //     //     output.push(outElement)
+    //     //   }
+    //     // }
+
+    //     // output.push('}')
+    //     // output.push('export var ' + docName + ': ' + docName + ';\n')
+    //     const document = `export interface ${docName} extends ${baseName} {
+    //   ${documentChildren}
     // }
 
-    // output.push('}')
-    // output.push('export var ' + docName + ': ' + docName + ';\n')
-    const document = `export interface ${docName} extends ${baseName} {
-  ${documentChildren}
-}
+    // export var ${docName}: ${docName};  `
 
-export var ${docName}: ${docName};  `
-
-    const out = `${output.join('\n')}\n${types}\n${members}\n${document}`
+    const out = `${output.join('\n')}\n${types}\n${members}\n` //${document}`
 
     const outFixedExtenders = this.extendedFrom.reduce((acc, extender) => {
       const extenderRegexp = new RegExp(
