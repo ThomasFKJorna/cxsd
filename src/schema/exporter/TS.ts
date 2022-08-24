@@ -12,12 +12,12 @@ import { makeNameBetter } from '../../makeNameBetter'
 import { format } from 'path'
 
 var docName = 'document'
-var baseName = 'Element'
+var baseName = 'XastElement'
 
 /** Export parsed schema to a TypeScript d.ts definition file. */
 
 const textNode = ({ title, name, type }: { name?: string; type?: Type; title?: string } = {}) =>
-  `export interface ${title ?? type.safeName} extends Element {
+  `export interface ${title ?? type.safeName} extends XastElement {
 name: ${!name || name === 'string' ? 'string' : `"${name}"`}
 children: [{
   type: 'text'${
@@ -314,7 +314,7 @@ export class TS extends Exporter {
         outChildList.length
           ? `children: ${shittyChildren}` // RequiredMap<${safeName}Children>[]`
           : needsChildren
-          ? '/** Element is self-closing */\nchildren: []'
+          ? '/** XastElement is self-closing */\nchildren: []'
           : ''
       }
 }
@@ -405,7 +405,6 @@ ${
       parentDef = this.writeTypeRef(type.parent, '_')
 
       if (!['string', 'number'].includes(content)) {
-        // console.log(content)
         output.push(exportPrefix + 'type ' + name + ' = ' + content + ';' + '\n')
       } else {
         const outName =
@@ -445,7 +444,7 @@ ${
 
     if (type.parent) parentDef = this.writeTypeRef(type.parent, '_')
 
-    if (/primitive/i.test(parentDef)) parentDef = 'TextElement'
+    if (/primitive/i.test(parentDef)) parentDef = 'XastTextElement'
     output.push(
       'export interface ' +
         name +
@@ -521,54 +520,54 @@ ${
     // output.push('}');
 
     output.push(`
-    export interface Attributes {
+    export interface XastAttributes {
         [name: string]: string | null | undefined;
     }
 
-    interface Text {
+    interface XastText {
       type: 'text'
       value: string
     }
 
-    interface Comment {
+    interface XastComment {
       type: 'comment'
       value: string
     }
 
-    interface CData {
+    interface XastCData{
       type: 'cdata'
       value: string
     }
 
-    interface Instruction {
+    interface XastInstruction{
       type: 'instruction'
       name: string
       value: string
     }
 
-    interface FakerElement {
+    interface FakerXastElement {
       type: "element"
       name: string
-      attributes?: Attributes | undefined
-      children: ({ type: string, name?: string, attributes?: Record<string, any>, children: any[] } | Text | Comment | Instruction | CData)[]
+      attributes?: XastAttributes | undefined
+      children: ({ type: string, name?: string, attributes?: Record<string, any>, children: any[] } | XastText| XastComment| XastInstruction | XastCData)[]
     }
 
-    interface FakeElement {
+    interface FakeXastElement {
       type: "element"
       name: string
-      attributes?: Attributes | undefined
-      children: (FakerElement | Text | Comment | Instruction | CData)[]
+      attributes?: XastAttributes | undefined
+      children: (FakerXastElement | XastText| XastComment| XastInstruction | XastCData)[]
     }
 
-    export interface Element {
+    export interface XastElement {
       type: "element"
       name: string
-      attributes?: Attributes | undefined
-      children: (FakeElement | Text | Comment | Instruction | CData)[]
+      attributes?: XastAttributes | undefined
+      children: (FakeXastElement | XastText| XastComment| XastInstruction| XastCData)[]
     }
 
-    interface TextElement extends Element {
-      children: [Text]
+    interface XastTextElement extends XastElement {
+      children: [XastText]
     }
     `)
     //     output.push(`export type ValuesType<T extends ReadonlyArray<any> | ArrayLike<any> | Record<any, any>> = T extends ReadonlyArray<any> ? T[number] : T extends ArrayLike<any> ? T[number] : T extends object ? T[keyof T] : never;
@@ -799,9 +798,9 @@ ${
     //       return `${acc}\n${out}`
     //     }, '')
     //     // for (var child of doc.childList) {
-    //     //   var outElement = this.writeMember(child, true)
-    //     //   if (outElement) {
-    //     //     output.push(outElement)
+    //     //   var outXastElement = this.writeMember(child, true)
+    //     //   if (outXastElement) {
+    //     //     output.push(outXastElement)
     //     //   }
     //     // }
 
