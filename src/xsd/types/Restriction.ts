@@ -10,7 +10,15 @@ import * as types from '../types'
 
 export class Restriction extends DerivationBase {
   static mayContain: () => types.BaseClass[] = () =>
-    DerivationBase.mayContain().concat([types.Enumeration])
+    DerivationBase.mayContain().concat([
+      types.Enumeration,
+      types.Pattern,
+      types.MaxLength,
+      types.MinLength,
+      types.MaxInclusive,
+      types.MinInclusive,
+      types.TotalDigits,
+    ])
 
   // TODO: Remove this.
   init(state: State) {
@@ -23,6 +31,9 @@ export class Restriction extends DerivationBase {
 
     if (parent instanceof types.SimpleType) {
       parent.setEnumerationList(this.enumerationList)
+    }
+    if (parent instanceof types.SimpleType) {
+      parent.setPattern(this.pattern)
     }
 
     super.resolve(state)
@@ -42,6 +53,91 @@ export class Restriction extends DerivationBase {
     this.enumerationList.push(content)
   }
 
+  addPattern(content: string) {
+    if (!this.pattern) {
+      // this.enumerationList = []
+
+      // TODO: Remove this and uncomment the resolve function.
+      var parent = this.parent.xsdElement
+
+      if (parent instanceof types.SimpleType) {
+        parent.setPattern(content)
+      }
+    }
+    this.pattern = content
+  }
+  addMaxLength(content: string) {
+    if (!this.maxLength) {
+      // this.enumerationList = []
+
+      // TODO: Remove this and uncomment the resolve function.
+      var parent = this.parent.xsdElement
+
+      if (parent instanceof types.SimpleType) {
+        parent.setMaxLength(content)
+      }
+    }
+    this.maxLength = content
+  }
+  addMinLength(content: string) {
+    if (!this.minLength) {
+      // this.enumerationList = []
+
+      // TODO: Remove this and uncomment the resolve function.
+      var parent = this.parent.xsdElement
+
+      if (parent instanceof types.SimpleType) {
+        parent.setMinLength(content)
+      }
+    }
+    this.minLength = content
+  }
+  addMaxInclusive(content: string) {
+    if (!this.maxInclusive) {
+      // this.enumerationList = []
+
+      // TODO: Remove this and uncomment the resolve function.
+      var parent = this.parent.xsdElement
+
+      if (parent instanceof types.SimpleType) {
+        parent.setMaxInclusive(content)
+      }
+    }
+    this.maxInclusive = content
+  }
+  addTotalDigits(content: string) {
+    if (!this.totalDigits) {
+      // this.enumerationList = []
+
+      // TODO: Remove this and uncomment the resolve function.
+      var parent = this.parent.xsdElement
+
+      if (parent instanceof types.SimpleType) {
+        parent.setTotalDigits(content)
+      }
+    }
+    this.totalDigits = content
+  }
+  addMinInclusive(content: string) {
+    if (!this.minInclusive) {
+      // this.enumerationList = []
+
+      // TODO: Remove this and uncomment the resolve function.
+      var parent = this.parent.xsdElement
+
+      if (parent instanceof types.SimpleType) {
+        parent.setMinInclusive(content)
+      }
+    }
+    this.minInclusive = content
+  }
+
   private parent: State // TODO: Remove this.
   private enumerationList: string[]
+  private pattern: string
+  private minLength: string
+  private maxLength: string
+  private minInclusive: string
+  private maxInclusive: string
+  private totalDigits: string
 }

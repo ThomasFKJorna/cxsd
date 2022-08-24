@@ -37,6 +37,15 @@ export class Type {
   safeName: string
   bytePos: number
 
+  /**
+   * Regex pattern
+   */
+  pattern?: string
+  minLength?: string
+  maxLength?: string
+  minInclusive?: string
+  maxInclusive?: string
+  totalDigits?: string
   /** Primitive type of child text node if defined
    * (representable as a JavaScript value). */
   primitiveType?: Type

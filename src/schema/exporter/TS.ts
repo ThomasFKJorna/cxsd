@@ -9,21 +9,45 @@ import { MemberRef } from '../MemberRef'
 import { Type } from '../Type'
 import { text } from 'stream/consumers'
 import { makeNameBetter } from '../../makeNameBetter'
+import { format } from 'path'
 
 var docName = 'document'
 var baseName = 'Element'
 
 /** Export parsed schema to a TypeScript d.ts definition file. */
 
-// const makeNameBetter = (name: string) => name
-// // replace SomethingType with Something
-// // and SomethingTypeNameType with SomethingName
-// // but don't replace SomethingTypeType with Something
-// .replace(/(\w|_)(?<!Type)Type/g, '$1')
-// // replace Hey_nerd with Hey_Nerd
-// .replace(/_([a-z])/g, (_, c) => c.toUpperCase())
-// // capitalize first letter
-// .replace(/^([a-z])/, (_, c) => c.toUpperCase())
+const textNode = ({ name, type }: { name?: string; type?: Type } = {}) =>
+  `Element & {
+name: ${!name || name === 'string' ? 'string' : `"${name}"`}
+children: [{
+  type: 'text'${
+    type?.minInclusive ||
+    type?.maxInclusive ||
+    type?.minLength ||
+    type?.maxLength ||
+    type?.pattern ||
+    type?.totalDigits
+      ? `\n/**${formatTypeAnnotations(type)}**/`
+      : ''
+  }
+  value: string
+}]
+}`
+
+const formatTypeAnnotations = (type: Type) => {
+  const { pattern, minInclusive, maxInclusive, minLength, maxLength, totalDigits } = type
+
+  const p = pattern ? ` * @pattern ${pattern}` : ''
+  const mi = minInclusive ? ` * @minInclusive ${minInclusive}` : ''
+  const ma = maxInclusive ? ` * @maxInclusive ${maxInclusive}` : ''
+  const ml = minLength ? ` * @minLength ${minLength}` : ''
+  const mx = maxLength ? ` * @maxLength ${maxLength}` : ''
+  const td = totalDigits ? ` * @maxLength ${totalDigits}\n   * @minLength ${totalDigits}` : ''
+
+  const annotations = [p, mi, ma, ml, mx, td].filter((x) => x).join('\n ')
+
+  return annotations ? `\n  ${annotations}\n` : ''
+}
 export class TS extends Exporter {
   /**
    * List of types which get extended from and are very badly fixed at the end
@@ -32,33 +56,52 @@ export class TS extends Exporter {
   extendedFrom: string[] = []
 
   /** Format an XSD annotation as JSDoc. */
-  static formatComment(indent: string, comment: string) {
-    var lineList = comment.split('\n')
-    var lineCount = lineList.length
-    var blankCount = 0
-    var contentCount = 0
-    var output: string[] = []
-    var prefix = '/**'
+  static formatComment(indent: string, comment?: string, type?: Type) {
+    const lineList = comment?.split('\n')
+    const prefix = '/**'
+    if (
+      !comment &&
+      (!type ||
+        (!type?.minInclusive &&
+          !type?.minLength &&
+          !type?.maxLength &&
+          !type?.maxInclusive &&
+          !type?.totalDigits &&
+          !type?.pattern))
+    )
+      return ''
 
-    for (var line of lineList) {
-      // Remove leading and trailing whitespace.
-      line = line.trim()
+    const description = `${lineList
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line, idx) => `${idx > 0 ? `${indent}  * ` : ''}${line}`)
+      .join('\n')}`
 
-      if (!line) ++blankCount
-      else {
-        if (blankCount && contentCount) output.push(indent + prefix)
+    const anno = type ? formatTypeAnnotations(type) : ''
+    return `${indent}${prefix} ${description}${anno}${indent}${
+      lineList.length > 1 ? '\n' + indent : ''
+    }**/`
+    // for (var line of lineList) {
+    //   // Remove leading and trailing whitespace.
+    //   line = line.trim()
 
-        output.push(indent + prefix + ' ' + line)
-        prefix = '  *'
+    //   if (!line) ++blankCount
+    //   else {
+    //     if (blankCount && contentCount) output.push(indent + prefix)
 
-        ++contentCount
-        blankCount = 0
-      }
-    }
+    //     output.push(indent + prefix + ' ' + line)
+    //     prefix = '  *'
 
-    if (output.length) output[output.length - 1] += ' */'
+    //     ++contentCount
+    //     blankCount = 0
+    //   }
+    // }
 
-    return output.join('\n')
+    // if (output.length) {
+    //   output[output.length - 1] += ' */'
+    // }
+
+    // return output.join('\n')
   }
 
   writeImport(shortName: string, relativePath: string, absolutePath: string) {
@@ -132,7 +175,6 @@ export class TS extends Exporter {
     if (ref.max > 1 && ref.member.proxy) typeList = [ref.member.proxy]
 
     var outTypeList = typeList.map((type: Type) => {
-      ;/namestyle/i.test(type.safeName) && console.log('before ', type.safeName, ref.member)
       if (!(type.isPlainPrimitive && (!type.literalList || !type.literalList.length))) {
         return this.writeTypeRef(type, '')
       }
@@ -240,6 +282,14 @@ export class TS extends Exporter {
         })
         .filter(Boolean)
 
+      const shittyChildren = `(${outChildList
+        .map((child) =>
+          child
+            .replace(/\s*?(\/\*.+\/[ \n]*)?[\s\w\?\.-]*: ([\w\.-]*)\[?\]?;?/ims, '$2')
+            .replace(';', ''),
+        )
+        .join(' | ')} )[]`
+
       const name =
         type.name ||
         (type.containingRef && type.containingRef.member && type.containingRef.member.name) ||
@@ -257,7 +307,7 @@ export class TS extends Exporter {
           : ''
       }${
         outChildList.length
-          ? `children: RequiredMap<${safeName}Children>[]`
+          ? `children: ${shittyChildren}` // RequiredMap<${safeName}Children>[]`
           : needsChildren
           ? '/** Element is self-closing */\nchildren: []'
           : ''
@@ -265,11 +315,12 @@ export class TS extends Exporter {
 }
 
 ${
-  outChildList.length
-    ? `export interface ${safeName}Children  {
-	${outChildList.join('\n\t')}
-}`
-    : ''
+  ''
+  //   outChildList.length
+  //     ? `export interface ${safeName}Children  {
+  // 	${outChildList.join('\n\t')}
+  // }`
+  //     : ''
 }
 			`
       output.push(out)
@@ -310,10 +361,9 @@ ${
     const name = type.safeName //type.safeName ? makeNameBetter(type?.safeName) : type?.safeName
 
     if (comment) {
-      output.push(TS.formatComment('', comment))
+      output.push(TS.formatComment('', comment, type))
       output.push('\n')
     }
-    ;/namestyle/.test(name) && console.log({ type })
 
     const needsChildren = !type.isPlainPrimitive && !type.parent
     const content = this.writeTypeContent(type, needsChildren)
@@ -363,13 +413,9 @@ ${
           // type.name
           // ? output.push(`export type ${name} =  ${outName}\n`)
           //   :
-          output.push(
-            `export type ${name} = TextNode${outName === 'string' ? '' : `<"${outName}">`};\n`,
-          )
+          output.push(`export type ${name} = ${textNode({ name: outName, type })};\n`)
         } else {
-          output.push(
-            `export type ${name} = TextNode${outName === 'string' ? '' : `<"${outName}">`};\n`,
-          )
+          output.push(`export type ${name} = ${textNode({ name: outName, type })};\n`)
         }
       }
 
@@ -470,19 +516,15 @@ ${
 
     output.push(`import {Element, Text} from 'xast'
 
-export interface TextNode<T extends string = string> extends Element {
-  type: "element"
-  name: T
-  children: [Text]
-}    `)
-    output.push(`export type ValuesType<T extends ReadonlyArray<any> | ArrayLike<any> | Record<any, any>> = T extends ReadonlyArray<any> ? T[number] : T extends ArrayLike<any> ? T[number] : T extends object ? T[keyof T] : never;
-export type NoUndefined<T> = Exclude<T, undefined>
-export type ArrayValueMaybe<T> = T extends any[]
-? ValuesType<NoUndefined<T>>
-: NoUndefined<T>
-export type AllTypes<T> = ArrayValueMaybe<ValuesType<T>>
-    
-export type RequiredMap<T> = AllTypes<T>`)
+    `)
+    //     output.push(`export type ValuesType<T extends ReadonlyArray<any> | ArrayLike<any> | Record<any, any>> = T extends ReadonlyArray<any> ? T[number] : T extends ArrayLike<any> ? T[number] : T extends object ? T[keyof T] : never;
+    // export type NoUndefined<T> = Exclude<T, undefined>
+    // export type ArrayValueMaybe<T> = T extends any[]
+    // ? ValuesType<NoUndefined<T>>
+    // : NoUndefined<T>
+    // export type AllTypes<T> = ArrayValueMaybe<ValuesType<T>>
+
+    // export type RequiredMap<T> = AllTypes<T>`)
 
     // const prettierTypes = namespace.typeList
     //   .map((type) => {
@@ -504,8 +546,6 @@ export type RequiredMap<T> = AllTypes<T>`)
       .sort((a, b) => a.safeName.localeCompare(b.safeName))
       .reduce((acc, member, idx) => {
         member.safeName = makeNameBetter(member.safeName)
-        if (/namestyle/i.test(namespace.memberList[idx - 1]?.safeName))
-          console.log({ member, me: alreadyVisitedMembers.at(-1) })
         if (!member) return acc
         // if (alreadyVisitedMembers.includes(member.safeName)) return acc
 
@@ -521,14 +561,21 @@ export type RequiredMap<T> = AllTypes<T>`)
          */
         const types = member.typeList.reduce((acc, type) => {
           if (!type) return acc
+
+          if (
+            type.maxInclusive ||
+            type.minInclusive ||
+            type.maxLength ||
+            type.minLength ||
+            type.totalDigits
+          ) {
+            console.log(type)
+          }
           type.safeName = makeNameBetter(type.safeName)
 
-          console.log(type.literalList)
           // TODO: Figureout what to do with lists
           if (type.isList && !alreadyVisitedTypes.includes(type.safeName)) {
             alreadyVisitedTypes.push(type.safeName)
-
-            type.isList && console.log('LIST', type)
 
             acc = `${acc}\n${
               type.comment
@@ -536,6 +583,7 @@ export type RequiredMap<T> = AllTypes<T>`)
                     '',
                     type.comment ??
                       'This is a list\nWe cannot currently accurately represent lists.\n',
+                    type,
                   )
                 : ''
             }\nexport type ${type.safeName} = string`
@@ -549,7 +597,6 @@ export type RequiredMap<T> = AllTypes<T>`)
             )
 
             if (alreadyVisitedTypes.includes(type.safeName)) {
-              console.log({ writtenName, safeName: type.safeName })
               return acc
             }
             alreadyVisitedTypes.push(type.safeName)
@@ -564,15 +611,18 @@ export type RequiredMap<T> = AllTypes<T>`)
           ) {
             alreadyVisitedTypes.push(member.safeName)
 
-            return `${acc}\n${comment ? TS.formatComment('', comment) : ''}\nexport type ${
+            return `${acc}\n${comment ? TS.formatComment('', comment, type) : ''}\nexport type ${
               member.safeName
-            } = TextNode<'${member.name}'>`
+            } = ${textNode({
+              name: member.name,
+              type,
+            })}`
           }
 
           if (type.literalList?.length > 0) {
             if (alreadyVisitedTypes.includes(type.safeName)) return acc
             alreadyVisitedTypes.push(type.safeName)
-            return `${acc}\n${comment ? TS.formatComment('', comment) : ''}\nexport type ${
+            return `${acc}\n${comment ? TS.formatComment('', comment, type) : ''}\nexport type ${
               type.safeName
             } = ${this.writeTypeContent(type)}`
           }
@@ -591,16 +641,16 @@ export type RequiredMap<T> = AllTypes<T>`)
 
           if (!alreadyVisitedTypes.includes(member.safeName)) {
             alreadyVisitedTypes.push(member.safeName)
-            acc = `${acc}\n${comment ? TS.formatComment('', comment) : ''}\nexport type ${
+            acc = `${acc}\n${comment ? TS.formatComment('', comment, type) : ''}\nexport type ${
               member.safeName
-            } = TextNode`
+            } = ${textNode({ type })}`
           }
 
           if (alreadyVisitedTypes.includes(safeSafeName)) return acc
           alreadyVisitedTypes.push(safeSafeName)
 
           return `${acc}\n${
-            comment ? TS.formatComment('', comment) : ''
+            comment ? TS.formatComment('', comment, type) : ''
           }\nexport type ${safeSafeName} = ${typetypeString}`
         }, '')
 
@@ -724,11 +774,13 @@ export type RequiredMap<T> = AllTypes<T>`)
         `export interface (${extender}) extends (.*?name:)[^\\n]*`,
         'msg',
       )
-      const extenderTypeRegexp = new RegExp(`export type (${extender}) = .*`, 'g')
+      const extenderTypeRegexp = new RegExp(`export type (${extender}) = {\n.*`, 'g')
 
+      const extenderPlainTypeRegexp = new RegExp(`export type (${extender}) = string`, 'g')
       const fixed = acc
         .replace(extenderRegexp, 'export interface $1 extends $2 string')
-        .replace(extenderTypeRegexp, 'export type $1 = TextNode')
+        .replace(extenderTypeRegexp, `export type $1 = {\n  name: string`)
+        .replace(extenderPlainTypeRegexp, `export type $1 = ${textNode()}`)
 
       return fixed
     }, out)

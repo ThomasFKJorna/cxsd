@@ -23,5 +23,54 @@ export class SimpleType extends types.TypeBase {
     return this.enumerationList
   }
 
+  setPattern(pattern: string) {
+    this.pattern = pattern
+  }
+
+  getPattern() {
+    return this.pattern
+  }
+  setMinLength(minLength: string) {
+    this.minLength = minLength
+  }
+
+  getMinLength() {
+    return this.minLength
+  }
+  setMaxLength(maxLength: string) {
+    this.maxLength = maxLength
+  }
+
+  getMaxLength() {
+    return this.maxLength
+  }
+  setTotalDigits(totalDigits: string) {
+    this.totalDigits = totalDigits
+  }
+
+  getTotalDigits() {
+    return this.totalDigits
+  }
+  setMaxInclusive(maxInclusive: string) {
+    this.maxInclusive = maxInclusive
+  }
+
+  getMaxInclusive() {
+    return this.maxInclusive
+  }
+  setMinInclusive(minInclusive: string) {
+    this.minInclusive = minInclusive
+  }
+
+  getMinInclusive() {
+    return this.minInclusive
+  }
+
   private enumerationList: string[]
+  private pattern: string
+  private minLength: string
+  private maxLength: string
+  private maxInclusive: string
+  private minInclusive: string
+  private totalDigits: string
 }

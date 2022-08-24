@@ -154,12 +154,24 @@ function exportType(type: types.TypeBase, namespace: schema.Namespace, context: 
     var literalList: string[]
     var parentSimple = type.getParent(types.SimpleType, false) as types.SimpleType
 
+    const pattern = parentSimple ? parentSimple.getPattern() : undefined
+    const maxLength = parentSimple ? parentSimple.getMaxLength() : undefined
+    const minLength = parentSimple ? parentSimple.getMinLength() : undefined
+    const maxInclusive = parentSimple ? parentSimple.getMaxInclusive() : undefined
+    const minInclusive = parentSimple ? parentSimple.getMinInclusive() : undefined
+    const totalDigits = parentSimple ? parentSimple.getTotalDigits() : undefined
     if (parentSimple) {
       // If parent is restricted to enumerated alternatives, output those instead.
       literalList = parentSimple.getEnumerationList()
       if (literalList) literalList = literalList.map((content: string) => '"' + content + '"')
     }
 
+    outType.maxInclusive = maxInclusive
+    outType.minInclusive = minInclusive
+    outType.totalDigits = totalDigits
+    outType.maxLength = maxLength
+    outType.minLength = minLength
+    outType.pattern = pattern
     outType.literalList = literalList
     outType.isPlainPrimitive = true
     outType.primitiveType = parentPrimitive.getOutType(context)
