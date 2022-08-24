@@ -24,168 +24,143 @@ const instructionSchema = z.object({
   name: z.string(),
   value: z.string(),
 })
-let u: z.ZodSchema<Element>
 
 export const elementSchema: z.ZodSchema<Element> = z.lazy(() =>
   z.object({
     type: z.literal('element'),
     name: z.string(),
-    attributes: z.record(z.string()).optional(),
+    attributes: z.union([attributesSchema, z.undefined()]).optional(),
     children: z.array(
       z.union([elementSchema, textSchema, commentSchema, instructionSchema, cDataSchema]),
     ),
   }),
-).schema
+)
 
 const textElementSchema = elementSchema.extend({
   children: z.tuple([textSchema]),
 })
 
-export const conferenceDateTSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(0).max(100),
-      }),
-    ]),
-  }),
-)
+export const conferenceDateTSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(0).max(100),
+    }),
+  ]),
+})
 
-export const pidSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().regex(/[hH][tT][tT][pP][sS]:\/\/.{1,50}/),
-      }),
-    ]),
-  }),
-)
+export const pidSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().regex(/[hH][tT][tT][pP][sS]:\/\/.{1,50}/),
+    }),
+  ]),
+})
 
-export const organizationTSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(511),
-      }),
-    ]),
-  }),
-)
+export const organizationTSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(511),
+    }),
+  ]),
+})
 
-export const orcidTSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z
-          .string()
-          .regex(/https?:\/\/orcid.org\/[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[X0-9]{1}/),
-      }),
-    ]),
-  }),
-)
+export const orcidTSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().regex(/https?:\/\/orcid.org\/[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[X0-9]{1}/),
+    }),
+  ]),
+})
 
-export const itemNumberTSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(32),
-      }),
-    ]),
-  }),
-)
+export const itemNumberTSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(32),
+    }),
+  ]),
+})
 
-export const identifierTSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(255),
-      }),
-    ]),
-  }),
-)
+export const identifierTSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(255),
+    }),
+  ]),
+})
 
-export const formatTSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(0).max(130),
-      }),
-    ]),
-  }),
-)
+export const formatTSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(0).max(130),
+    }),
+  ]),
+})
 
-export const resourceTSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z
-          .string()
-          .min(1)
-          .max(2048)
-          .regex(/([hH][tT][tT][pP]|[hH][tT][tT][pP][sS]|[fF][tT][pP]):\/\/.*/),
-      }),
-    ]),
-  }),
-)
+export const resourceTSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z
+        .string()
+        .min(1)
+        .max(2048)
+        .regex(/([hH][tT][tT][pP]|[hH][tT][tT][pP][sS]|[fF][tT][pP]):\/\/.*/),
+    }),
+  ]),
+})
 
-export const cmAssertionSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(1024),
-      }),
-    ]),
-  }),
-)
+export const cmAssertionSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(1024),
+    }),
+  ]),
+})
 
-export const isbnTSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z
-          .string()
-          .min(10)
-          .max(17)
-          .regex(/(97(8|9)-)?\d[\d \-]+[\dX]/),
-      }),
-    ]),
-  }),
-)
+export const isbnTSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z
+        .string()
+        .min(10)
+        .max(17)
+        .regex(/(97(8|9)-)?\d[\d \-]+[\dX]/),
+    }),
+  ]),
+})
 
-export const issnTSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z
-          .string()
-          .min(8)
-          .max(9)
-          .regex(/\d{4}-?\d{3}[\dX]/),
-      }),
-    ]),
-  }),
-)
+export const issnTSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z
+        .string()
+        .min(8)
+        .max(9)
+        .regex(/\d{4}-?\d{3}[\dX]/),
+    }),
+  ]),
+})
 
 export const citationTSchema = elementSchema.extend({
   type: z.literal('element'),
@@ -200,59 +175,51 @@ export const aSchema = textElementSchema.extend({
   }),
 })
 
-export const abbrevTitleSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(150),
-      }),
-    ]),
-  }),
-)
+export const abbrevTitleSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(150),
+    }),
+  ]),
+})
 
 export const abbrevTitlePrimitiveTypeSchema = z.string().min(1).max(150)
 
-export const approvedMonthSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(2),
-      }),
-    ]),
-  }),
-)
+export const approvedMonthSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(2),
+    }),
+  ]),
+})
 
 export const stdAltAsPublishedApprovedMonthSchema = z.any()
 
-export const approvedYearSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const approvedYearSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const stdAltAsPublishedApprovedYearSchema = z.string()
 
-export const articleTitleSchema = elementSchema.and(
-  z.object({
-    name: z.literal('article_title'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const articleTitleSchema = elementSchema.extend({
+  name: z.literal('article_title'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const assertionSchema = elementSchema.extend({
   type: z.literal('element'),
@@ -269,29 +236,25 @@ export const assertionSchema = elementSchema.extend({
   children: z.tuple([]),
 })
 
-export const authenticatedSchema = elementSchema.and(
-  z.object({
-    name: z.literal('authenticated'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const authenticatedSchema = elementSchema.extend({
+  name: z.literal('authenticated'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const authorSchema = elementSchema.and(
-  z.object({
-    name: z.literal('author'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const authorSchema = elementSchema.extend({
+  name: z.literal('author'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const xrefFacesSchema = elementSchema.extend({
   type: z.literal('element'),
@@ -320,45 +283,39 @@ export const citationListSchema = elementSchema.extend({
   children: z.array(citationSchema),
 })
 
-export const codenSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(6),
-      }),
-    ]),
-  }),
-)
+export const codenSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(6),
+    }),
+  ]),
+})
 
 export const codenPrimitiveTypeSchema = z.string().min(1).max(6)
 
-export const componentNumberSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(50),
-      }),
-    ]),
-  }),
-)
+export const componentNumberSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(50),
+    }),
+  ]),
+})
 
 export const componentNumberPrimitiveTypeSchema = z.string().min(1).max(50)
 
-export const componentSizeSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const componentSizeSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const componentComponentSizeSchema = z.any()
 
@@ -371,17 +328,15 @@ export const contentItemComponentTypeSchema = z.union([
   z.literal('other'),
 ])
 
-export const conferenceAcronymSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(127),
-      }),
-    ]),
-  }),
-)
+export const conferenceAcronymSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(127),
+    }),
+  ]),
+})
 
 export const conferenceAcronymPrimitiveTypeSchema = z.string().min(1).max(127)
 
@@ -398,89 +353,77 @@ export const conferenceDateSchema = conferenceDateTSchema.extend({
   }),
 })
 
-export const conferenceLocationSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(255),
-      }),
-    ]),
-  }),
-)
+export const conferenceLocationSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(255),
+    }),
+  ]),
+})
 
 export const conferenceLocationPrimitiveTypeSchema = z.string().min(2).max(255)
 
-export const conferenceNameSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(3).max(512),
-      }),
-    ]),
-  }),
-)
+export const conferenceNameSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(3).max(512),
+    }),
+  ]),
+})
 
 export const conferenceNamePrimitiveTypeSchema = z.string().min(3).max(512)
 
-export const conferenceNumberSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(15),
-      }),
-    ]),
-  }),
-)
+export const conferenceNumberSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(15),
+    }),
+  ]),
+})
 
 export const conferenceNumberPrimitiveTypeSchema = z.string().min(1).max(15)
 
-export const conferenceSponsorSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(255),
-      }),
-    ]),
-  }),
-)
+export const conferenceSponsorSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(255),
+    }),
+  ]),
+})
 
 export const conferenceSponsorPrimitiveTypeSchema = z.string().min(1).max(255)
 
-export const conferenceThemeSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(255),
-      }),
-    ]),
-  }),
-)
+export const conferenceThemeSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(255),
+    }),
+  ]),
+})
 
 export const conferenceThemePrimitiveTypeSchema = z.string().min(1).max(255)
 
 export const resourceContentVersionSchema = z.union([z.literal('vor'), z.literal('am')])
 
-export const contractNumberSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(255),
-      }),
-    ]),
-  }),
-)
+export const contractNumberSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(255),
+    }),
+  ]),
+})
 
 export const contractNumberPrimitiveTypeSchema = z.string().min(2).max(255)
 
@@ -757,57 +700,49 @@ export const itemCrawlerSchema = z.union([
   z.literal('iParadigms'),
 ])
 
-export const crossmarkDomainExclusiveSchema = elementSchema.and(
-  z.object({
-    name: z.literal('crossmark_domain_exclusive'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const crossmarkDomainExclusiveSchema = elementSchema.extend({
+  name: z.literal('crossmark_domain_exclusive'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const crossmarkPolicySchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z
-          .string()
-          .min(6)
-          .max(2048)
-          .regex(/10\.[0-9]{4,9}\/.{1,200}/),
-      }),
-    ]),
-  }),
-)
+export const crossmarkPolicySchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z
+        .string()
+        .min(6)
+        .max(2048)
+        .regex(/10\.[0-9]{4,9}\/.{1,200}/),
+    }),
+  ]),
+})
 
-export const doiTSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const doiTSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const crossmarkVersionSchema = elementSchema.and(
-  z.object({
-    name: z.literal('crossmark_version'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const crossmarkVersionSchema = elementSchema.extend({
+  name: z.literal('crossmark_version'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const customMetadataSchema = elementSchema.extend({
   type: z.literal('element'),
@@ -815,17 +750,15 @@ export const customMetadataSchema = elementSchema.extend({
   children: z.array(z.literal(ct.Program)),
 })
 
-export const cYearSchema = elementSchema.and(
-  z.object({
-    name: z.literal('cYear'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const cYearSchema = elementSchema.extend({
+  name: z.literal('cYear'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const datasetDatasetTypeSchema = z.union([
   z.literal('record'),
@@ -834,105 +767,91 @@ export const datasetDatasetTypeSchema = z.union([
   z.literal('other'),
 ])
 
-export const dateSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const dateSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const datePrimitiveTypeSchema = z.string()
 
-export const daySchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(2),
-      }),
-    ]),
-  }),
-)
+export const daySchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(2),
+    }),
+  ]),
+})
 
 export const xrefDaySchema = z.any().min(2).max(2)
 
-export const degreeSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(255),
-      }),
-    ]),
-  }),
-)
+export const degreeSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(255),
+    }),
+  ]),
+})
 
 export const degreePrimitiveTypeSchema = z.string().min(2).max(255)
 
-export const depositorNameSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(130),
-      }),
-    ]),
-  }),
-)
+export const depositorNameSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(130),
+    }),
+  ]),
+})
 
 export const depositorNamePrimitiveTypeSchema = z.string().min(1).max(130)
 
-export const doiSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const doiSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const doiPrimitiveTypeSchema = z.string()
 
-export const doiBatchIdSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(4).max(100),
-      }),
-    ]),
-  }),
-)
+export const doiBatchIdSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(4).max(100),
+    }),
+  ]),
+})
 
 export const doiBatchIdPrimitiveTypeSchema = z.string().min(4).max(100)
 
-export const domainSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z
-          .string()
-          .min(4)
-          .max(1024)
-          .regex(/[A-Za-z0-9_]+([-.][A-Za-z0-9_]+)*\.[A-Za-z0-9_]+([-.][A-Za-z0-9_]+)*/),
-      }),
-    ]),
-  }),
-)
+export const domainSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z
+        .string()
+        .min(4)
+        .max(1024)
+        .regex(/[A-Za-z0-9_]+([-.][A-Za-z0-9_]+)*\.[A-Za-z0-9_]+([-.][A-Za-z0-9_]+)*/),
+    }),
+  ]),
+})
 
 export const cmDomainSchema = z
   .string()
@@ -940,83 +859,71 @@ export const cmDomainSchema = z
   .max(1024)
   .regex(/[A-Za-z0-9_]+([-.][A-Za-z0-9_]+)*\.[A-Za-z0-9_]+([-.][A-Za-z0-9_]+)*/)
 
-export const editionNumberSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(15),
-      }),
-    ]),
-  }),
-)
+export const editionNumberSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(15),
+    }),
+  ]),
+})
 
 export const editionNumberPrimitiveTypeSchema = z.string().min(1).max(15)
 
-export const elocationIdSchema = elementSchema.and(
-  z.object({
-    name: z.literal('elocation_id'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const elocationIdSchema = elementSchema.extend({
+  name: z.literal('elocation_id'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const emailAddressSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(6).max(200),
-      }),
-    ]),
-  }),
-)
+export const emailAddressSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(6).max(200),
+    }),
+  ]),
+})
 
 export const emailAddressPrimitiveTypeSchema = z.string().min(6).max(200)
 
-export const endDaySchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(2),
-      }),
-    ]),
-  }),
-)
+export const endDaySchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(2),
+    }),
+  ]),
+})
 
-export const endMonthSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(2),
-      }),
-    ]),
-  }),
-)
+export const endMonthSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(2),
+    }),
+  ]),
+})
 
 export const xrefMonthSchema = z.any()
 
-export const endYearSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(4).max(4),
-      }),
-    ]),
-  }),
-)
+export const endYearSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(4).max(4),
+    }),
+  ]),
+})
 
 export const xrefYearSchema = z.any().min(4).max(4)
 
@@ -1036,87 +943,75 @@ export const eventMetadataSchema = elementSchema.extend({
   ),
 })
 
-export const explanationSchema = elementSchema.and(
-  z.object({
-    name: z.literal('explanation'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const explanationSchema = elementSchema.extend({
+  name: z.literal('explanation'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const familySchema = elementSchema.and(
-  z.object({
-    name: z.literal('family'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const familySchema = elementSchema.extend({
+  name: z.literal('family'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const stringSchema = z.string()
 
-export const filterSchema = elementSchema.and(
-  z.object({
-    name: z.literal('filter'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const filterSchema = elementSchema.extend({
+  name: z.literal('filter'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const firstPageSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(32),
-      }),
-    ]),
-  }),
-)
+export const firstPageSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(32),
+    }),
+  ]),
+})
 
 export const firstPagePrimitiveTypeSchema = z.string().min(1).max(32)
 
-export const fullTitleSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(255),
-      }),
-    ]),
-  }),
-)
+export const fullTitleSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(255),
+    }),
+  ]),
+})
 
 export const fullTitlePrimitiveTypeSchema = z.string().min(1).max(255)
 
-export const givenNameSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z
-          .string()
-          .min(1)
-          .max(60)
-          .regex(/[^\d\?]*[^\?\s]+[^\d]*/),
-      }),
-    ]),
-  }),
-)
+export const givenNameSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z
+        .string()
+        .min(1)
+        .max(60)
+        .regex(/[^\d\?]*[^\?\s]+[^\d]*/),
+    }),
+  ]),
+})
 
 export const givenNamePrimitiveTypeSchema = z
   .string()
@@ -1124,59 +1019,51 @@ export const givenNamePrimitiveTypeSchema = z
   .max(60)
   .regex(/[^\d\?]*[^\?\s]+[^\d]*/)
 
-export const groupLabelSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(150),
-      }),
-    ]),
-  }),
-)
+export const groupLabelSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(150),
+    }),
+  ]),
+})
 
 export const cmAssertionGroupLabelSchema = z.string().min(2).max(150)
 
-export const groupNameSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(150),
-      }),
-    ]),
-  }),
-)
+export const groupNameSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(150),
+    }),
+  ]),
+})
 
 export const cmAssertionGroupNameSchema = z.string().min(2).max(150)
 
-export const groupTitleSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(1024),
-      }),
-    ]),
-  }),
-)
+export const groupTitleSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(1024),
+    }),
+  ]),
+})
 
 export const groupTitlePrimitiveTypeSchema = z.string().min(1).max(1024)
 
-export const hrefSchema = elementSchema.and(
-  z.object({
-    name: z.literal('href'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const hrefSchema = elementSchema.extend({
+  name: z.literal('href'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const identifierIdTypeSchema = z.union([
   z.literal('pii'),
@@ -1199,73 +1086,63 @@ export const identifierSchema = identifierTSchema.extend({
   }),
 })
 
-export const institutionAcronymSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(255),
-      }),
-    ]),
-  }),
-)
+export const institutionAcronymSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(255),
+    }),
+  ]),
+})
 
 export const institutionAcronymPrimitiveTypeSchema = z.string().min(1).max(255)
 
-export const institutionDepartmentSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(255),
-      }),
-    ]),
-  }),
-)
+export const institutionDepartmentSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(255),
+    }),
+  ]),
+})
 
 export const institutionDepartmentPrimitiveTypeSchema = z.string().min(2).max(255)
 
-export const institutionNameSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(1024),
-      }),
-    ]),
-  }),
-)
+export const institutionNameSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(1024),
+    }),
+  ]),
+})
 
 export const institutionNamePrimitiveTypeSchema = z.string().min(1).max(1024)
 
-export const institutionPlaceSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(255),
-      }),
-    ]),
-  }),
-)
+export const institutionPlaceSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(255),
+    }),
+  ]),
+})
 
 export const institutionPlacePrimitiveTypeSchema = z.string().min(2).max(255)
 
-export const issueSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(32),
-      }),
-    ]),
-  }),
-)
+export const issueSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(32),
+    }),
+  ]),
+})
 
 export const issuePrimitiveTypeSchema = z.string().min(1).max(32)
 
@@ -1277,55 +1154,47 @@ export const itemNumberSchema = itemNumberTSchema.extend({
   }),
 })
 
-export const itemNumberTypeSchema = elementSchema.and(
-  z.object({
-    name: z.literal('item_number_type'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const itemNumberTypeSchema = elementSchema.extend({
+  name: z.literal('item_number_type'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const journalTitleSchema = elementSchema.and(
-  z.object({
-    name: z.literal('journal_title'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const journalTitleSchema = elementSchema.extend({
+  name: z.literal('journal_title'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const keySchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(128),
-      }),
-    ]),
-  }),
-)
+export const keySchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(128),
+    }),
+  ]),
+})
 
 export const keyPrimitiveTypeSchema = z.string()
 
-export const labelSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(150),
-      }),
-    ]),
-  }),
-)
+export const labelSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(150),
+    }),
+  ]),
+})
 
 export const cmAssertionLabelSchema = z.string().min(2).max(150)
 
@@ -1517,31 +1386,27 @@ export const languageSchema = z.union([
   z.literal('zh'),
 ])
 
-export const lastPageSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(32),
-      }),
-    ]),
-  }),
-)
+export const lastPageSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(32),
+    }),
+  ]),
+})
 
 export const lastPagePrimitiveTypeSchema = z.string().min(1).max(32)
 
-export const levelSequenceNumberSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(1),
-      }),
-    ]),
-  }),
-)
+export const levelSequenceNumberSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(1),
+    }),
+  ]),
+})
 
 export const contentItemLevelSequenceNumberSchema = z.any()
 
@@ -1702,17 +1567,15 @@ export const mimeTypeSchema = z.union([
   z.literal('Data/spcvue.htm'),
 ])
 
-export const monthSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(2),
-      }),
-    ]),
-  }),
-)
+export const monthSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(2),
+    }),
+  ]),
+})
 
 export const collectionMultiResolutionSchema = z.union([z.literal('lock'), z.literal('unlock')])
 
@@ -1756,17 +1619,15 @@ export const orcidSchema = orcidTSchema.extend({
   }),
 })
 
-export const orderSchema = elementSchema.and(
-  z.object({
-    name: z.literal('order'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const orderSchema = elementSchema.extend({
+  name: z.literal('order'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const originalLanguageTitleSchema = elementSchema.extend({
   type: z.literal('element'),
@@ -1777,17 +1638,15 @@ export const originalLanguageTitleSchema = elementSchema.extend({
   children: z.tuple([]),
 })
 
-export const otherPagesSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(100),
-      }),
-    ]),
-  }),
-)
+export const otherPagesSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(100),
+    }),
+  ]),
+})
 
 export const otherPagesPrimitiveTypeSchema = z.string().min(1).max(100)
 
@@ -1797,17 +1656,15 @@ export const pagesSchema = elementSchema.extend({
   children: z.array(z.union([firstPageSchema, lastPageSchema, otherPagesSchema])),
 })
 
-export const parentDoiSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(6).max(2048),
-      }),
-    ]),
-  }),
-)
+export const parentDoiSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(6).max(2048),
+    }),
+  ]),
+})
 
 export const saComponentParentDoiSchema = z.string()
 
@@ -1818,17 +1675,15 @@ export const componentParentRelationSchema = z.union([
   z.literal('isTranslationOf'),
 ])
 
-export const partNumberSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(15),
-      }),
-    ]),
-  }),
-)
+export const partNumberSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(15),
+    }),
+  ]),
+})
 
 export const partNumberPrimitiveTypeSchema = z.string().min(1).max(15)
 
@@ -1841,31 +1696,27 @@ export const prefixSchema = elementSchema.extend({
   children: z.tuple([]),
 })
 
-export const proceedingsSubjectSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(255),
-      }),
-    ]),
-  }),
-)
+export const proceedingsSubjectSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(255),
+    }),
+  ]),
+})
 
 export const proceedingsSubjectPrimitiveTypeSchema = z.string().min(1).max(255)
 
-export const proceedingsTitleSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(511),
-      }),
-    ]),
-  }),
-)
+export const proceedingsTitleSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(511),
+    }),
+  ]),
+})
 
 export const proceedingsTitlePrimitiveTypeSchema = z.string().min(1).max(511)
 
@@ -1902,31 +1753,27 @@ export const publisherItemSchema = elementSchema.extend({
   children: z.array(z.union([identifierSchema, itemNumberSchema])),
 })
 
-export const publisherNameSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(255),
-      }),
-    ]),
-  }),
-)
+export const publisherNameSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(255),
+    }),
+  ]),
+})
 
 export const publisherNamePrimitiveTypeSchema = z.string().min(1).max(255)
 
-export const publisherPlaceSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(255),
-      }),
-    ]),
-  }),
-)
+export const publisherPlaceSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(255),
+    }),
+  ]),
+})
 
 export const publisherPlacePrimitiveTypeSchema = z.string().min(2).max(255)
 
@@ -1953,31 +1800,27 @@ export const referenceDistributionOptsSchema = z.union([
   z.literal('any'),
 ])
 
-export const regAgencySchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const regAgencySchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const componentRegAgencySchema = z.string()
 
-export const registrantSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(255),
-      }),
-    ]),
-  }),
-)
+export const registrantSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(255),
+    }),
+  ]),
+})
 
 export const registrantPrimitiveTypeSchema = z.string().min(1).max(255)
 
@@ -1990,45 +1833,39 @@ export const resourceSchema = resourceTSchema.extend({
   }),
 })
 
-export const revisionRoundSchema = elementSchema.and(
-  z.object({
-    name: z.literal('revision-round'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const revisionRoundSchema = elementSchema.extend({
+  name: z.literal('revision-round'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const runningNumberSchema = elementSchema.and(
-  z.object({
-    name: z.literal('running_number'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const runningNumberSchema = elementSchema.extend({
+  name: z.literal('running_number'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const scnPolicyRefSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z
-          .string()
-          .min(1)
-          .max(2048)
-          .regex(/([hH][tT][tT][pP]|[hH][tT][tT][pP][sS]|[fF][tT][pP]):\/\/.*/),
-      }),
-    ]),
-  }),
-)
+export const scnPolicyRefSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z
+        .string()
+        .min(1)
+        .max(2048)
+        .regex(/([hH][tT][tT][pP]|[hH][tT][tT][pP][sS]|[fF][tT][pP]):\/\/.*/),
+    }),
+  ]),
+})
 
 export const scnPolicyRefPrimitiveTypeSchema = z
   .string()
@@ -2047,55 +1884,47 @@ export const scnPolicySetSchema = elementSchema.extend({
 
 export const sequenceSchema = z.union([z.literal('first'), z.literal('additional')])
 
-export const seriesNumberSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(15),
-      }),
-    ]),
-  }),
-)
+export const seriesNumberSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(15),
+    }),
+  ]),
+})
 
 export const seriesNumberPrimitiveTypeSchema = z.string().min(1).max(15)
 
-export const seriesTitleSchema = elementSchema.and(
-  z.object({
-    name: z.literal('series_title'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const seriesTitleSchema = elementSchema.extend({
+  name: z.literal('series_title'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const setSchema = elementSchema.and(
-  z.object({
-    name: z.literal('set'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const setSchema = elementSchema.extend({
+  name: z.literal('set'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const specialNumberingSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(15),
-      }),
-    ]),
-  }),
-)
+export const specialNumberingSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(15),
+    }),
+  ]),
+})
 
 export const specialNumberingPrimitiveTypeSchema = z.string().min(1).max(15)
 
@@ -2110,108 +1939,92 @@ export const standardsBodySchema = elementSchema.extend({
   children: z.tuple([]),
 })
 
-export const startDateSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const startDateSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const startDaySchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(2),
-      }),
-    ]),
-  }),
-)
+export const startDaySchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(2),
+    }),
+  ]),
+})
 
-export const startMonthSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(2),
-      }),
-    ]),
-  }),
-)
+export const startMonthSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(2),
+    }),
+  ]),
+})
 
-export const startYearSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(4).max(4),
-      }),
-    ]),
-  }),
-)
+export const startYearSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(4).max(4),
+    }),
+  ]),
+})
 
-export const stdAdoptedFromSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(150),
-      }),
-    ]),
-  }),
-)
+export const stdAdoptedFromSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(150),
+    }),
+  ]),
+})
 
 export const stdDesignatorvalueTSchema = z.string().min(2).max(150)
 
-export const stdAltScriptSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(150),
-      }),
-    ]),
-  }),
-)
+export const stdAltScriptSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(150),
+    }),
+  ]),
+})
 
-export const stdDesignatorSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(150),
-      }),
-    ]),
-  }),
-)
+export const stdDesignatorSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(150),
+    }),
+  ]),
+})
 
 export const stdDesignatorTSchema = elementSchema.extend({
   type: z.literal('element'),
   name: z.string(),
 })
 
-export const stdRevisionOfSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(150),
-      }),
-    ]),
-  }),
-)
+export const stdRevisionOfSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(150),
+    }),
+  ]),
+})
 
 export const stdSetDesignatorSchema = stdDesignatorTSchema.extend({
   type: z.literal('element'),
@@ -2221,17 +2034,15 @@ export const stdSetDesignatorSchema = stdDesignatorTSchema.extend({
   }),
 })
 
-export const stdSupersedesSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(150),
-      }),
-    ]),
-  }),
-)
+export const stdSupersedesSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(150),
+    }),
+  ]),
+})
 
 export const stdUndatedDesignatorSchema = stdDesignatorTSchema.extend({
   type: z.literal('element'),
@@ -2242,17 +2053,15 @@ export const stdUndatedDesignatorSchema = stdDesignatorTSchema.extend({
   }),
 })
 
-export const stdVariantFormSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(2).max(150),
-      }),
-    ]),
-  }),
-)
+export const stdVariantFormSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(2).max(150),
+    }),
+  ]),
+})
 
 export const subtitleSchema = elementSchema.extend({
   type: z.literal('element'),
@@ -2260,35 +2069,31 @@ export const subtitleSchema = elementSchema.extend({
   children: z.tuple([]),
 })
 
-export const suffixSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(10),
-      }),
-    ]),
-  }),
-)
+export const suffixSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(10),
+    }),
+  ]),
+})
 
 export const suffixPrimitiveTypeSchema = z.string().min(1).max(10)
 
-export const surnameSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z
-          .string()
-          .min(1)
-          .max(60)
-          .regex(/[^\d\?]*[^\?\s]+[^\d]*/),
-      }),
-    ]),
-  }),
-)
+export const surnameSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z
+        .string()
+        .min(1)
+        .max(60)
+        .regex(/[^\d\?]*[^\?\s]+[^\d]*/),
+    }),
+  ]),
+})
 
 export const surnamePrimitiveTypeSchema = z
   .string()
@@ -2296,17 +2101,15 @@ export const surnamePrimitiveTypeSchema = z
   .max(60)
   .regex(/[^\d\?]*[^\?\s]+[^\d]*/)
 
-export const timestampSchema = elementSchema.and(
-  z.object({
-    name: z.literal('timestamp'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const timestampSchema = elementSchema.extend({
+  name: z.literal('timestamp'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const titleSchema = elementSchema.extend({
   type: z.literal('element'),
@@ -2361,17 +2164,15 @@ export const postedContentTypeSchema = z.union([
   z.literal('other'),
 ])
 
-export const undatedSchema = elementSchema.and(
-  z.object({
-    name: z.literal('undated'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const undatedSchema = elementSchema.extend({
+  name: z.literal('undated'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
 export const unstructuredCitationSchema = elementSchema.extend({
   type: z.literal('element'),
@@ -2394,55 +2195,47 @@ export const updatesSchema = elementSchema.extend({
   children: z.array(updateSchema),
 })
 
-export const versionSchema = elementSchema.and(
-  z.object({
-    name: z.literal('version'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const versionSchema = elementSchema.extend({
+  name: z.literal('version'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const volumeSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(1).max(32),
-      }),
-    ]),
-  }),
-)
+export const volumeSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(1).max(32),
+    }),
+  ]),
+})
 
 export const volumePrimitiveTypeSchema = z.string().min(1).max(32)
 
-export const volumeTitleSchema = elementSchema.and(
-  z.object({
-    name: z.literal('volume_title'),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string(),
-      }),
-    ]),
-  }),
-)
+export const volumeTitleSchema = elementSchema.extend({
+  name: z.literal('volume_title'),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string(),
+    }),
+  ]),
+})
 
-export const yearSchema = elementSchema.and(
-  z.object({
-    name: z.string(),
-    children: z.tuple([
-      z.object({
-        type: z.literal('text'),
-        value: z.string().min(4).max(4),
-      }),
-    ]),
-  }),
-)
+export const yearSchema = elementSchema.extend({
+  name: z.string(),
+  children: z.tuple([
+    z.object({
+      type: z.literal('text'),
+      value: z.string().min(4).max(4),
+    }),
+  ]),
+})
 
 export const dateTSchema = elementSchema.extend({
   type: z.literal('element'),

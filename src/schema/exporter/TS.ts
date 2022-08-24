@@ -16,8 +16,8 @@ var baseName = 'Element'
 
 /** Export parsed schema to a TypeScript d.ts definition file. */
 
-const textNode = ({ name, type }: { name?: string; type?: Type } = {}) =>
-  `Element & {
+const textNode = ({ title, name, type }: { name?: string; type?: Type; title?: string } = {}) =>
+  `export interface ${title ?? type.safeName} extends Element {
 name: ${!name || name === 'string' ? 'string' : `"${name}"`}
 children: [{
   type: 'text'${
@@ -413,9 +413,9 @@ ${
           // type.name
           // ? output.push(`export type ${name} =  ${outName}\n`)
           //   :
-          output.push(`export type ${name} = ${textNode({ name: outName, type })};\n`)
+          output.push(`${textNode({ title: name, name: outName, type })};\n`)
         } else {
-          output.push(`export type ${name} = ${textNode({ name: outName, type })};\n`)
+          output.push(`${textNode({ title: name, name: outName, type })};\n`)
         }
       }
 
@@ -541,11 +541,25 @@ ${
       value: string
     }
 
+    interface FakerElement {
+      type: "element"
+      name: string
+      attributes?: Attributes | undefined
+      children: ({ type: string, name?: string, attributes?: Attributes | undefined, children: any[] })[]
+    }
+
+    interface FakeElement {
+      type: "element"
+      name: string
+      attributes?: Attributes | undefined
+      children: (FakerElement | Text | Comment | Instruction | CData)[]
+    }
+
     export interface Element {
       type: "element"
       name: string
-      attributes?: { [key: string]: string }
-      children: (Element | Text | Comment | Instruction | CData)[]
+      attributes?: Attributes | undefined
+      children: (FakeElement | Text | Comment | Instruction | CData)[]
     }
 
     interface TextElement extends Element {
@@ -646,9 +660,8 @@ ${
           ) {
             alreadyVisitedTypes.push(member.safeName)
 
-            return `${acc}\n${comment ? TS.formatComment('', comment, type) : ''}\nexport type ${
-              member.safeName
-            } = ${textNode({
+            return `${acc}\n${comment ? TS.formatComment('', comment, type) : ''}\n${textNode({
+              title: member.safeName,
               name: member.name,
               type,
             })}`
@@ -676,9 +689,10 @@ ${
 
           if (!alreadyVisitedTypes.includes(member.safeName)) {
             alreadyVisitedTypes.push(member.safeName)
-            acc = `${acc}\n${comment ? TS.formatComment('', comment, type) : ''}\nexport type ${
-              member.safeName
-            } = ${textNode({ type })}`
+            acc = `${acc}\n${comment ? TS.formatComment('', comment, type) : ''}\n${textNode({
+              title: member.safeName,
+              type,
+            })}`
           }
 
           if (alreadyVisitedTypes.includes(safeSafeName)) return acc
@@ -815,7 +829,7 @@ ${
       const fixed = acc
         .replace(extenderRegexp, 'export interface $1 extends $2 string')
         .replace(extenderTypeRegexp, `export type $1 = {\n  name: string`)
-        .replace(extenderPlainTypeRegexp, `export type $1 = ${textNode()}`)
+        .replace(extenderPlainTypeRegexp, (s, one) => textNode({ title: one }))
 
       return fixed
     }, out)
