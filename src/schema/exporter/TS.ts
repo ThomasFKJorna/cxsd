@@ -248,7 +248,12 @@ export class TS extends Exporter {
         .map((attribute) => {
           var outAttribute = this.writeMember(attribute, false, true)
           return outAttribute
-            ?.replace(/: \b(boolean|number)\b/i, (_, c) => `: \`\$\{${c}\}\``)
+            ?.replace(
+              /: \b(boolean|number)\b/i,
+              (_, c) =>
+                //`: \`\$\{${c}\}\``)
+                ': string',
+            )
             .replace(/(.*?): \bDate\b/i, '/** A date, unknown format **/\n$1: string')
           // .replace(/: (\w+)\Type/, ': $1')
         })
@@ -545,7 +550,7 @@ ${
       type: "element"
       name: string
       attributes?: Attributes | undefined
-      children: ({ type: string, name?: string, attributes?: Attributes | undefined, children: any[] })[]
+      children: ({ type: string, name?: string, attributes?: Record<string, any>, children: any[] } | Text | Comment | Instruction | CData)[]
     }
 
     interface FakeElement {
@@ -611,15 +616,6 @@ ${
         const types = member.typeList.reduce((acc, type) => {
           if (!type) return acc
 
-          if (
-            type.maxInclusive ||
-            type.minInclusive ||
-            type.maxLength ||
-            type.minLength ||
-            type.totalDigits
-          ) {
-            console.log(type)
-          }
           type.safeName = makeNameBetter(type.safeName)
 
           // TODO: Figureout what to do with lists
@@ -680,7 +676,8 @@ ${
               ? 'string'
               : type.primitiveType.name === 'Date'
               ? 'string'
-              : `\`\$\{${type.primitiveType.name}\}\``
+              : //: `\`\$\{${type.primitiveType.name}\}\``
+                'string'
 
           const safeSafeName =
             type.safeName === member.safeName ? `${type.safeName}PrimitiveType` : type.safeName
