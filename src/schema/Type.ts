@@ -39,17 +39,26 @@ export class Type {
 
   /** Primitive type of child text node if defined
    * (representable as a JavaScript value). */
-  primitiveType: Type
+  primitiveType?: Type
   /** List of allowed literal values, if such a restriction is defined. */
-  literalList: string[]
+  literalList?: string[]
 
   /** Type only contains a child text node and no other data. */
-  isPlainPrimitive: boolean
+  isPlainPrimitive?: boolean
 
-  isList: boolean
+  /**
+   * Type is a list of other types.
+   */
+  isList?: boolean
 
+  /**
+   * Type is a proxy
+   */
   isProxy: boolean
 
+  /**
+   * Type is exported
+   */
   isExported: boolean
 
   attributeTbl: { [name: string]: MemberRef } = {}
@@ -71,6 +80,10 @@ export class Type {
 
   comment: string
 
+  isSimpleType?: boolean
+  isComplexType?: boolean
+
+  isNotElement?: boolean
   surrogateKey: number
   private static nextKey = 0
 

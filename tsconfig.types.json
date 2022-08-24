@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "files": ["**/*.d.ts"],
+  "include": ["**/*.d.ts"],
+  "exclude": ["node_modules", "typingz/*"]
+}

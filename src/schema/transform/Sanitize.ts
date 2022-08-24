@@ -205,7 +205,7 @@ export class Sanitize extends Transform<Sanitize, void, State> {
       }
 
       if (safeName == '*') ref.safeName = safeName
-      else ref.safeName = (ref.prefix || '') + safeName
+      else ref.safeName = '' + safeName
 
       this.addNameToMemberTypes(type, ref.member)
 
@@ -244,8 +244,8 @@ export class Sanitize extends Transform<Sanitize, void, State> {
         type.safeName = [
           containingType ? containingType.safeName : '',
           (containingRef.safeName || '').replace(/^([a-z])/, capitalize),
-          type.isProxy ? 'Proxy' : '',
-          'Type',
+          // type.isProxy ? 'Proxy' : '',
+          // 'Type',
         ].join('')
       }
 

@@ -8,25 +8,30 @@ import { Member } from '../Member'
 import { MemberRef } from '../MemberRef'
 import { Type } from '../Type'
 import { text } from 'stream/consumers'
+import { makeNameBetter } from '../../makeNameBetter'
 
 var docName = 'document'
 var baseName = 'Element'
 
 /** Export parsed schema to a TypeScript d.ts definition file. */
 
-const makeNameBetter = (name: string) =>
-  name
-    // replace SomethingType with Something
-    // and SomethingTypeNameType with SomethingName
-    // but don't replace SomethingTypeType with Something
-    .replace(/(\w|_)(?<!Type)Type/g, '$1')
-    // replace Hey_nerd with Hey_Nerd
-    .replace(/_([a-z])/g, (_, c) => c.toUpperCase())
-    // capitalize first letter
-    .replace(/^([a-z])/, (_, c) => c.toUpperCase())
+// const makeNameBetter = (name: string) => name
+// // replace SomethingType with Something
+// // and SomethingTypeNameType with SomethingName
+// // but don't replace SomethingTypeType with Something
+// .replace(/(\w|_)(?<!Type)Type/g, '$1')
+// // replace Hey_nerd with Hey_Nerd
+// .replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+// // capitalize first letter
+// .replace(/^([a-z])/, (_, c) => c.toUpperCase())
 export class TS extends Exporter {
-  /** Format an XSD annotation as JSDoc. */
+  /**
+   * List of types which get extended from and are very badly fixed at the end
+   * by just manually making their `name: string`
+   */
+  extendedFrom: string[] = []
 
+  /** Format an XSD annotation as JSDoc. */
   static formatComment(indent: string, comment: string) {
     var lineList = comment.split('\n')
     var lineCount = lineList.length
@@ -109,7 +114,16 @@ export class TS extends Exporter {
 
     if (!parentList.length) parentList.push(baseName)
 
-    return ' extends ' + parentList.map((parent) => parent.replace(/^_/, '')).join(', ')
+    return (
+      ' extends ' +
+      parentList
+        .map((parent) => {
+          const cleanParent = parent.replace(/^_/, '')
+          if (!this.extendedFrom.includes(cleanParent)) this.extendedFrom.push(cleanParent)
+          return cleanParent
+        })
+        .join(', ')
+    )
   }
 
   writeTypeList(ref: MemberRef, isAttribute = false) {
@@ -118,13 +132,16 @@ export class TS extends Exporter {
     if (ref.max > 1 && ref.member.proxy) typeList = [ref.member.proxy]
 
     var outTypeList = typeList.map((type: Type) => {
-      if (type.isPlainPrimitive && (!type.literalList || !type.literalList.length)) {
-        const primitiveName = type.primitiveType.name
+      ;/namestyle/i.test(type.safeName) && console.log('before ', type.safeName, ref.member)
+      if (!(type.isPlainPrimitive && (!type.literalList || !type.literalList.length))) {
+        return this.writeTypeRef(type, '')
+      }
 
-        return !isAttribute && ['string', 'number', 'boolean'].includes(primitiveName)
-          ? makeNameBetter(ref.safeName || ref.member.safeName)
-          : primitiveName
-      } else return this.writeTypeRef(type, '')
+      const primitiveName = type.primitiveType.name
+
+      return !isAttribute && ['string', 'number', 'boolean'].includes(primitiveName)
+        ? makeNameBetter(ref.safeName || ref.member.safeName)
+        : primitiveName
     })
 
     if (outTypeList.length == 0) return null
@@ -165,7 +182,7 @@ export class TS extends Exporter {
     return output.join('')
   }
 
-  writeTypeContent(type: Type) {
+  writeTypeContent(type: Type, needsChildren = false) {
     var output: string[] = []
 
     if (type.isPlainPrimitive) {
@@ -188,12 +205,10 @@ export class TS extends Exporter {
       const outAttrList = type.attributeList
         .map((attribute) => {
           var outAttribute = this.writeMember(attribute, false, true)
-          if (outAttribute) {
-            return makeNameBetter(outAttribute).replace(
-              /: (boolean|number)/,
-              (_, c) => `: \`\$\{${c}\}\``,
-            )
-          }
+          return outAttribute
+            ?.replace(/: \b(boolean|number)\b/i, (_, c) => `: \`\$\{${c}\}\``)
+            .replace(/(.*?): \bDate\b/i, '/** A date, unknown format **/\n$1: string')
+          // .replace(/: (\w+)\Type/, ': $1')
         })
         .filter(Boolean)
 
@@ -240,7 +255,13 @@ export class TS extends Exporter {
 	}
 `
           : ''
-      }${outChildList.length ? `children: RequiredMap<${safeName}Children>[]` : ''}
+      }${
+        outChildList.length
+          ? `children: RequiredMap<${safeName}Children>[]`
+          : needsChildren
+          ? '/** Element is self-closing */\nchildren: []'
+          : ''
+      }
 }
 
 ${
@@ -265,9 +286,6 @@ ${
   }
 
   writeType(type: Type, member?: MemberRef) {
-    if (type.parent) {
-      console.dir(type.safeName, { depth: 4 })
-    }
     var namespace = this.namespace
     var output: string[] = []
     var comment =
@@ -295,8 +313,10 @@ ${
       output.push(TS.formatComment('', comment))
       output.push('\n')
     }
+    ;/namestyle/.test(name) && console.log({ type })
 
-    const content = this.writeTypeContent(type)
+    const needsChildren = !type.isPlainPrimitive && !type.parent
+    const content = this.writeTypeContent(type, needsChildren)
 
     if (namespace.isPrimitiveSpace) {
       output.push(
@@ -315,11 +335,11 @@ ${
       return output.join('')
     }
 
-    if (/5.3.1/.test(namespace.name)) {
-      ;/date_?t/i?.test(type.name ?? type.safeName) &&
-        console.log(name, type, type.isPlainPrimitive)
-      ;/day/i?.test(type.name ?? type.safeName) && console.log(type, type.isPlainPrimitive)
-    }
+    // if (/5.3.1/.test(namespace.name)) {
+    //   ;/date_?t/i?.test(type.name ?? type.safeName) &&
+    //     console.log(name, type, type.isPlainPrimitive)
+    //   ;/day/i?.test(type.name ?? type.safeName) && console.log(type, type.isPlainPrimitive)
+    // }
 
     if (type.isList) {
       output.push(exportPrefix + 'type ' + name + ' = ' + content + ';' + '\n')
@@ -330,7 +350,7 @@ ${
       parentDef = this.writeTypeRef(type.parent, '_')
 
       if (!['string', 'number'].includes(content)) {
-        console.log(content)
+        // console.log(content)
         output.push(exportPrefix + 'type ' + name + ' = ' + content + ';' + '\n')
       } else {
         const outName =
@@ -464,92 +484,255 @@ export type AllTypes<T> = ArrayValueMaybe<ValuesType<T>>
     
 export type RequiredMap<T> = AllTypes<T>`)
 
-    const prettierTypes = namespace.typeList
-      .map((type) => {
-        if (!type) return
-        type.safeName = makeNameBetter(type.safeName)
-        return type
-      })
-      .filter(Boolean)
+    // const prettierTypes = namespace.typeList
+    //   .map((type) => {
+    //     if (!type) return
+    //     type.safeName = makeNameBetter(type?.safeName)
+    //     return type
+    //   })
+    //   .filter(Boolean)
 
-    namespace.memberList.forEach((member) => {
-      if (!member) return
-      member.safeName = makeNameBetter(member.safeName)
-    })
-
-    for (var type of prettierTypes
-      .slice(0)
-      .sort((a: Type, b: Type) => a.safeName.localeCompare(b.safeName))) {
-      if (!type) continue
-
-      output.push(this.writeType(type))
-    }
+    // namespace.memberList.forEach((member) => {
+    //   if (!member) return
+    //   member.safeName = makeNameBetter(member.safeName)
+    // })
 
     const alreadyVisitedMembers: string[] = []
+
+    const alreadyVisitedTypes: string[] = []
+    const members = namespace.memberList
+      .sort((a, b) => a.safeName.localeCompare(b.safeName))
+      .reduce((acc, member, idx) => {
+        member.safeName = makeNameBetter(member.safeName)
+        if (/namestyle/i.test(namespace.memberList[idx - 1]?.safeName))
+          console.log({ member, me: alreadyVisitedMembers.at(-1) })
+        if (!member) return acc
+        // if (alreadyVisitedMembers.includes(member.safeName)) return acc
+
+        // alreadyVisitedMembers.push(member.safeName)
+
+        // if (/5.3/.test(namespace.name) && /date_?t/i.test(member?.safeName)) {
+        //   const { namespace, ...useful } = member
+        //   // console.log(useful)
+        // }
+
+        /**
+         * Print all the children
+         */
+        const types = member.typeList.reduce((acc, type) => {
+          if (!type) return acc
+          type.safeName = makeNameBetter(type.safeName)
+
+          console.log(type.literalList)
+          // TODO: Figureout what to do with lists
+          if (type.isList && !alreadyVisitedTypes.includes(type.safeName)) {
+            alreadyVisitedTypes.push(type.safeName)
+
+            type.isList && console.log('LIST', type)
+
+            acc = `${acc}\n${
+              type.comment
+                ? TS.formatComment(
+                    '',
+                    type.comment ??
+                      'This is a list\nWe cannot currently accurately represent lists.\n',
+                  )
+                : ''
+            }\nexport type ${type.safeName} = string`
+          }
+
+          if (!type.isPlainPrimitive) {
+            const writtenType = `${this.writeType(type)}`
+            const writtenName = writtenType.replace(
+              /.*(?:export )?(?:interface|type) (\w+).*/ims,
+              '$1',
+            )
+
+            if (alreadyVisitedTypes.includes(type.safeName)) {
+              console.log({ writtenName, safeName: type.safeName })
+              return acc
+            }
+            alreadyVisitedTypes.push(type.safeName)
+
+            return `${acc}\n${writtenType}`
+          }
+
+          const comment = type?.primitiveType?.comment ?? type.comment ?? member.comment
+          if (
+            /\b(string|number|boolean)\b/i.test(type?.name ?? type.safeName) &&
+            !alreadyVisitedTypes.includes(member.safeName)
+          ) {
+            alreadyVisitedTypes.push(member.safeName)
+
+            return `${acc}\n${comment ? TS.formatComment('', comment) : ''}\nexport type ${
+              member.safeName
+            } = TextNode<'${member.name}'>`
+          }
+
+          if (type.literalList?.length > 0) {
+            if (alreadyVisitedTypes.includes(type.safeName)) return acc
+            alreadyVisitedTypes.push(type.safeName)
+            return `${acc}\n${comment ? TS.formatComment('', comment) : ''}\nexport type ${
+              type.safeName
+            } = ${this.writeTypeContent(type)}`
+          }
+
+          const typetypeString =
+            type.primitiveType.name === 'string'
+              ? 'string'
+              : type.primitiveType.name === 'Date'
+              ? 'string'
+              : `\`\$\{${type.primitiveType.name}\}\``
+
+          const safeSafeName =
+            type.safeName === member.safeName ? `${type.safeName}PrimitiveType` : type.safeName
+
+          //acc = `${acc}\nexport type ${member.safeName} = ${safeSafeName} & ${typetypeString}`
+
+          if (!alreadyVisitedTypes.includes(member.safeName)) {
+            alreadyVisitedTypes.push(member.safeName)
+            acc = `${acc}\n${comment ? TS.formatComment('', comment) : ''}\nexport type ${
+              member.safeName
+            } = TextNode`
+          }
+
+          if (alreadyVisitedTypes.includes(safeSafeName)) return acc
+          alreadyVisitedTypes.push(safeSafeName)
+
+          return `${acc}\n${
+            comment ? TS.formatComment('', comment) : ''
+          }\nexport type ${safeSafeName} = ${typetypeString}`
+        }, '')
+
+        return `${acc}\n${types}`
+      }, '')
+
+    const types = namespace.typeList.reduce((acc, type) => {
+      if (!type) return acc
+      type.safeName = makeNameBetter(type.safeName)
+
+      if (alreadyVisitedTypes.includes(type.safeName)) return acc
+
+      alreadyVisitedTypes.push(type.safeName)
+      // don't do the types which are also members
+      if (
+        namespace.memberList.find(
+          (member) => member?.safeName?.toLowerCase() === type.safeName.toLowerCase(),
+        )
+      ) {
+        return acc
+      }
+      return `${acc}\n${this.writeType(type)}`
+    }, '')
+
+    // for (var type of prettierTypes
+    //   .slice(0)
+    //   .sort((a: Type, b: Type) => a.safeName.localeCompare(b.safeName))) {
+    //   if (!type) continue
+    //   if (type.isSimpleType && /5.3.1/.test(namespace.name))
+    //     console.log('simpletype', type.safeName)
+
+    //   if (type.isComplexType && /5.3.1/.test(namespace.name))
+    //     console.log('complexType', type.safeName)
+
+    //   output.push(this.writeType(type))
+    // }
+
     // The typelist does not include all types,
     // as it treats all the Members which have a type of string as the same
     // but, we don't treat them as the same.
     // So, we need to add the missing types.
-    namespace.memberList.forEach((member) => {
-      if (
-        member.typeList &&
-        member.typeList[0] &&
-        (member.typeList[0].childList.length > 0 || member.typeList[0].attributeList.length > 0)
+    // namespace.memberList.forEach((member) => {
+    //   const { namespace, ...useful } = member
+    //   if (/5.3.1/.test(namespace.name)) {
+    //     console.log(useful)
+    //   }
+    //   if (
+    //     member.typeList &&
+    //     member.typeList[0] &&
+    //     (member.typeList[0].childList.length > 0 || member.typeList[0].attributeList.length > 0)
+    //   )
+    //     return
+
+    //   if (/volume/i.test(member.safeName)) {
+    //     const type = namespace.typeList.find((type) => /publishername/i.test(type?.safeName))
+
+    //     console.log('HERE')
+    //     console.log(member, type)
+    //   }
+    //   if (
+    //     namespace.typeList.find(
+    //       (type) =>
+    //         // new RegExp(member.safeName, 'i').test(type?.safeName ?? type?.name ?? ''),
+    //         member?.safeName?.toLowerCase() === type?.safeName?.toLowerCase(),
+    //     )
+    //   ) {
+    //     console.log(`${member.safeName} is already defined`)
+    //     return
+    //   }
+
+    //   if (!member.safeName || !member.name) {
+    //     console.log('Member without name: ', member.name)
+    //     return
+    //   }
+
+    //   if (alreadyVisitedMembers.includes(member.safeName)) {
+    //     console.log('Member already visited: ', member.name)
+    //     return
+    //   }
+
+    //   alreadyVisitedMembers.push(member.safeName)
+    //   const goodName = member.safeName
+    //     .replace(/_(\w)/g, (_, c) => c.toUpperCase())
+    //     .replace(/^(\w)/, (_, c) => c.toUpperCase())
+
+    //   const out = `${
+    //     member.comment ? `${TS.formatComment('', member.comment)}\n` : ''
+    //   }export type ${goodName} = TextNode<"${member.name}">;\n`
+
+    //   output.push(out)
+    // })
+
+    // output.push('export interface ' + docName + ' extends ' + baseName + ' {')
+
+    const documentChildren = doc.childList.reduce((acc, child) => {
+      if (!child) return acc
+      const out = this.writeMember(child, true)
+      if (!out) return acc
+      return `${acc}\n${out}`
+    }, '')
+    // for (var child of doc.childList) {
+    //   var outElement = this.writeMember(child, true)
+    //   if (outElement) {
+    //     output.push(outElement)
+    //   }
+    // }
+
+    // output.push('}')
+    // output.push('export var ' + docName + ': ' + docName + ';\n')
+    const document = `export interface ${docName} extends ${baseName} {
+  ${documentChildren}
+}
+
+export var ${docName}: ${docName};  `
+
+    const out = `${output.join('\n')}\n${types}\n${members}\n${document}`
+
+    const outFixedExtenders = this.extendedFrom.reduce((acc, extender) => {
+      const extenderRegexp = new RegExp(
+        `export interface (${extender}) extends (.*?name:)[^\\n]*`,
+        'msg',
       )
-        return
+      const extenderTypeRegexp = new RegExp(`export type (${extender}) = .*`, 'g')
 
-      if (/publishername/i.test(member.safeName)) {
-        const type = namespace.typeList.find((type) => /publishername/i.test(type?.safeName))
+      const fixed = acc
+        .replace(extenderRegexp, 'export interface $1 extends $2 string')
+        .replace(extenderTypeRegexp, 'export type $1 = TextNode')
 
-        console.log('HERE')
-        console.log(member, type)
-      }
-      if (
-        namespace.typeList.find(
-          (type) =>
-            // new RegExp(member.safeName, 'i').test(type?.safeName ?? type?.name ?? ''),
-            member?.safeName?.toLowerCase() === type?.safeName?.toLowerCase(),
-        )
-      ) {
-        console.log(`${member.safeName} is already defined`)
-        return
-      }
+      return fixed
+    }, out)
 
-      if (!member.safeName || !member.name) {
-        console.log('Member without name: ', member.name)
-        return
-      }
-
-      if (alreadyVisitedMembers.includes(member.safeName)) {
-        console.log('Member already visited: ', member.name)
-        return
-      }
-
-      alreadyVisitedMembers.push(member.safeName)
-      const goodName = member.safeName
-        .replace(/_(\w)/g, (_, c) => c.toUpperCase())
-        .replace(/^(\w)/, (_, c) => c.toUpperCase())
-
-      const out = `${
-        member.comment ? `${TS.formatComment('', member.comment)}\n` : ''
-      }export type ${goodName} = TextNode<"${member.name}">;\n`
-
-      output.push(out)
-    })
-
-    output.push('export interface ' + docName + ' extends ' + baseName + ' {')
-
-    for (var child of doc.childList) {
-      var outElement = this.writeMember(child, true)
-      if (outElement) {
-        output.push(outElement)
-      }
-    }
-
-    output.push('}')
-    output.push('export var ' + docName + ': ' + docName + ';\n')
-
-    return output.join('\n')
+    return outFixedExtenders
   }
 
   getOutName(name: string) {

@@ -191,6 +191,11 @@ function exportType(type: types.TypeBase, namespace: schema.Namespace, context: 
     outType.isList = true
   }
 
+  // if (type instanceof types.SimpleType) outType.isSimpleType = true
+
+  // if (type instanceof types.ComplexType) outType.isComplexType = true
+  // console.log('hey', outType)
+
   return outType
 }
 

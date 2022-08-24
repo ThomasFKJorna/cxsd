@@ -12,5 +12,5 @@
   },
   "files": ["src/cli.ts"],
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "typingz/*"]
+  "exclude": ["dist", "**/test.ts", "node_modules", "typingz/*"]
 }
