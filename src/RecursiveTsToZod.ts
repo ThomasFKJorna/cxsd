@@ -96,7 +96,7 @@ const recursiveImport = async (
   const otherImports = await Promise.all(
     imports.map(async ({ alias, path }) => {
       if (mem.includes(path)) {
-        return
+        return { alias, path, children: [] }
       }
 
       mem.push(path)
