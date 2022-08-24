@@ -434,12 +434,13 @@ ${
         return output.join('')
       }
       // NOTE: Substitution groups are ignored here!
-      output.push('type _' + name + ' = ' + parentDef + ';' + '\n')
+      // output.push('type _' + name + ' = ' + parentDef + ';' + '\n')
       return output.join('')
     }
 
     if (type.parent) parentDef = this.writeTypeRef(type.parent, '_')
 
+    if (/primitive/i.test(parentDef)) parentDef = 'TextElement'
     output.push(
       'export interface ' +
         name +
@@ -514,8 +515,42 @@ ${
     // output.push('\t_namespace: string;');
     // output.push('}');
 
-    output.push(`import {Element, Text} from 'xast'
+    output.push(`
+    export interface Attributes {
+        [name: string]: string | null | undefined;
+    }
 
+    interface Text {
+      type: 'text'
+      value: string
+    }
+
+    interface Comment {
+      type: 'comment'
+      value: string
+    }
+
+    interface CData {
+      type: 'cdata'
+      value: string
+    }
+
+    interface Instruction {
+      type: 'instruction'
+      name: string
+      value: string
+    }
+
+    export interface Element {
+      type: "element"
+      name: string
+      attributes?: { [key: string]: string }
+      children: (Element | Text | Comment | Instruction | CData)[]
+    }
+
+    interface TextElement extends Element {
+      children: [Text]
+    }
     `)
     //     output.push(`export type ValuesType<T extends ReadonlyArray<any> | ArrayLike<any> | Record<any, any>> = T extends ReadonlyArray<any> ? T[number] : T extends ArrayLike<any> ? T[number] : T extends object ? T[keyof T] : never;
     // export type NoUndefined<T> = Exclude<T, undefined>
